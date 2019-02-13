@@ -60,7 +60,7 @@ Dependencies
 * To install R script dependencies use `install.package()`,  <br />
   or `install.packages("BiocManager")` and `BiocManager::install()`  <br />
   The full list of R packages is:  <br />
-  `optparse, vioplot, GSA, parallel, data.table, GSVA, qvalue, precrec, ROCR, Seurat, dplyr, Rserve`
+  `optparse, vioplot, GSA, parallel, data.table, GSVA, qvalue, precrec, ROCR, Seurat, dplyr, Rserve, fisher.test, p.adjust`
 * To install Perl script dependencies download `perl_modules` directory from this repository  <br />
   and add it to your `PERL5LIB` environment variable.  <br />
   Other modules required: `Date::Calc` which can be installed from CPAN
