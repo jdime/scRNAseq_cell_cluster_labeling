@@ -63,7 +63,7 @@ Dependencies
   `optparse, vioplot, GSA, parallel, data.table, GSVA, qvalue, precrec, ROCR, Seurat, dplyr, Rserve, fisher.test, p.adjust`
 * To install Perl script dependencies download `perl_modules` directory from this repository  <br />
   and add it to your `PERL5LIB` environment variable.  <br />
-  Other modules required: `Date::Calc` which can be installed from CPAN
+  Other Perl modules required are: `Date::Calc` which can be installed from CPAN
 * The following Java scripts are needed: <br />
   CIBERSORT.jar can be obtained from https://cibersort.stanford.edu/download.php  <br />
   gsea-3.0.jar  can be obtained from http://software.broadinstitute.org/gsea/downloads.jsp
