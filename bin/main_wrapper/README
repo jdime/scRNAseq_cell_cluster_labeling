@@ -1,1 +1,66 @@
-a
+####################################
+### Script 'subsamples_gene_classes_and_runs_enrichment_scripts.R' is a *wrapper* to run implementations of
+### methods to predict cell types using cell clusters from scRNA-seq data and cell type gene expression signatures
+###
+### It computes:
+### a) generating Receiver Operating Characteristic (ROC) and Precision-Recall (PR) curves for each method predictions
+### b) getting ROC and PR Area Under the Curves (ROC AUC, and PR AUC)
+### c) running robustness analyses by subsampling marker genes from cell type signatures and repeating ROC AUC and PR AUC analyses
+###
+### Uses three types of infiles:
+### (1) a matrix with average gene expression for each gene (rows) cell clusters from scRNA-seq (columns)
+### (2) cell type gene expression signatures
+### (3) a reference paired table with gold standard cell type predictions for each cell cluster
+###
+### The general flow of this script is the following:
+### (i)   Formats inputs for each requested cell type prediction method: CIBERSORT, GSEA, GSVA, and ORA
+### (ii)  Subsamples cell type gene expression signatures using infiles (2)
+### (iii) Runs cell type predictions methods using infile (1) and subsampled signatures from step (ii)
+### (iv)  Gather results from step (iii)
+### (v)   Runs ROC, PR and AUC analyses using results from step (iv) and infile (3)
+### (vi)  Runs robustness analyses (optional), including violin plots of AUC distributions with results from step (v)
+###
+### Notes:
+###        Note 1
+###        In the case of CIBERSORT, two forms of cell type signature infiles can be provided:
+###        - in the form of gene sets (2a) or in the form of gene expression profiles (2b)
+###        - Subsampling genes from is always conducted using 2a type files, which can be propagated to 2b type files using script:
+###          'propagates_permuted_gmt_files_to_profile.R'
+###
+###        Note 2
+###        To add new methods to evaluate you can:
+###        a) add the path to the executable in 'Dependencies:'
+###        b) provide inputs and parameters adding commands indicated by 'Runs NEW_METHOD and gather its outputs'
+###        c) add program name to this script 'option_list' parameters --software_to_run and --software_to_auc
+###        d) add program name to script 'obtains_performance_plots_from_cluster_labelings.pl' so that it can take a 'Generic_ES' infile
+###
+####################################
+### Questions/comments to Javier Diaz - javier.diazmejia@gmail.com
+####################################
+
+####################################
+### HOW TO RUN THIS SCRIPT 
+### Using one-line-commands in a console or terminal type:
+### 'Rscript ~/path_to_this_file/subsamples_gene_classes_and_runs_enrichment_scripts.R -h'
+### for help
+####################################
+
+####################################
+### Dependencies:
+####################################
+### R and Rscript (tested with version 3.5.1)
+###
+### R libraries:
+### 'optparse'   (CRAN) to handle one-line-commands
+### 'vioplot'    (CRAN) to generate violin plots of permutation results
+###
+### External scripts (check each script for their own dependencies)
+### and change their path as needed:
+### ~/r_programs/obtains_permuted_samples_from_gmt.R
+### ~/r_programs/propagates_permuted_gmt_files_to_profile.R
+### ~/bin/obtains_CIBERSORT_for_MatrixColumns.pl
+### ~/bin/obtains_GSEA_for_MatrixColumns.pl
+### ~/r_programs/obtains_GSVA_for_MatrixColumns.R
+### ~/bin/obtains_ORA_for_MatrixColumns.pl
+### ~/bin/obtains_performance_plots_from_cluster_labelings.pl
+####################################
