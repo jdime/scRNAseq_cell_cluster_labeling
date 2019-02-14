@@ -1,0 +1,8 @@
+To see the help of R scripts run them like: 
+`Rscript ~/path_to_script/script.R -h`
+
+Check each script code for dependencies and further documentation.
+To install R script dependencies use `install.package()`, 
+or `install.packages("BiocManager")` and `BiocManager::install()` 
+The full list of R packages is: 
+`optparse, vioplot, GSA, parallel, data.table, GSVA, qvalue, precrec, ROCR, Seurat, dplyr, Rserve, fisher.test, p.adjust`
