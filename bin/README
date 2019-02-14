@@ -1,8 +1,22 @@
-To see the help of R scripts run them like: 
-`Rscript ~/path_to_script/script.R -h`
+How to run the scripts
+================
+* To see the `help` of R scripts run them like:
+  `Rscript ~/path_to_script/script.R -h`
+* To see the help of Perl scripts, make the files executable with 
+  `chmod +x script.pl` and run them like: 
+  `~/path_to_script/script.pl`
 
-Check each script code for dependencies and further documentation.
-To install R script dependencies use `install.package()`, 
-or `install.packages("BiocManager")` and `BiocManager::install()` 
-The full list of R packages is: 
-`optparse, vioplot, GSA, parallel, data.table, GSVA, qvalue, precrec, ROCR, Seurat, dplyr, Rserve, fisher.test, p.adjust`
+
+Dependencies
+================
+* Check each script code for dependencies and further documentation.
+* To install R script dependencies use `install.package()`, 
+  or `install.packages("BiocManager")` and `BiocManager::install()` 
+  The full list of R packages is: 
+  `"optparse", "vioplot", "GSA", "parallel", "data.table", "GSVA", "qvalue", "precrec", "ROCR", "Seurat", "dplyr", "Rserve", "fisher.test", "p.adjust"`
+* To install Perl script dependencies download `perl_modules` directory from this repository 
+  and add it to your `PERL5LIB` environment variable.
+  Other Perl modules required are: `Date::Calc` which can be installed from CPAN
+* The following Java scripts are needed:
+  CIBERSORT.jar can be obtained from https://cibersort.stanford.edu/download.php 
+  gsea-3.0.jar  can be obtained from http://software.broadinstitute.org/gsea/downloads.jsp
