@@ -21,7 +21,7 @@ Scripts
 | `obtains_CIBERSORT_for_MatrixColumns.pl`                       | Runs CIBERSORT using gene expression signatures and a matrix with average gene expressions per gene, per cell cluster) |
 | `obtains_GSEA_for_MatrixColumns.pl`                            | Runs GSEA using gene expression signatures and a matrix with average gene expressions per cell cluster) |
 | `obtains_GSVA_for_MatrixColumns.R`                             | Runs GSVA using gene expression signatures and a matrix with average gene expressions per cell cluster) |
-| `obtains_HYPERGEOMETRIC_for_MatrixColumns.pl`                  | Runs ORA using gene expression signatures and a matrix with average gene expressions per cell cluster) |
+| `obtains_ORA_for_MatrixColumns.pl`                             | Runs ORA using gene expression signatures and a matrix with average gene expressions per cell cluster) |
 
 **Scripts to run ROC and PR curve analyses**
 ---
