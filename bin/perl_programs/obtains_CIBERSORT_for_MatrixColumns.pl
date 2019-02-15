@@ -166,7 +166,7 @@ $NumberOfColHeaders++;
 ############################
 
 if ($hashParameters{classes_type} =~ /^gmt$/i) {
-system "transforms_GMT_to_Matrix_1_0.pl -infile_gmt $hashParameters{infile_classes} -path_outfiles $hashParameters{path_outfiles}";
+&transforms_GMT_to_Matrix_1_0($hashParameters{infile_classes});
 $ClassesFileForCibersort = "$hashParameters{path_outfiles}/$outfileWOpath_classes.1_0.tsv";
 }else{
 $ClassesFileForCibersort = "$hashParameters{infile_classes}";
@@ -314,11 +314,6 @@ overall\t$all_overall_seconds\tsecs\n";
 #### Step 9 -- Finishing program
 ############################
 
-print "\nWARNING!!! need to evaluater if these parameters influence output:
--m Integer Set minimum number of DEGs to consider from each phenotype for signature matrix (50)
--x Integer Set maximum number of DEGs to consider from each phenotype for signature matrix (150)
--g Merge cell types during signature matrix construction to reduce kappa until below maximum threshold  (False)\n\n";
-
 print "\n  Done!!!\n\nCIBERSORT conducted for:\n'$hashParameters{infile_matrix}'\nvs.\n'$hashParameters{infile_classes}'\n\nCheck directory:\n$outdir\n\n";
 
 exit;
@@ -405,6 +400,59 @@ $Extras
 #################################################################
 ######################### PARAMETERS ############################
 #################################################################\n\n";
+
+}
+##<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+sub transforms_GMT_to_Matrix_1_0 {
+
+my($infile_gmt) = @_;
+
+open INFILE_GMT, "<$infile_gmt" or die "Can't open -infile_gmt '$infile_gmt'\n\n";
+
+while ($line = <INFILE_GMT>) {
+chomp $line;
+
+	unless ($line =~ /^#/) {
+	@arr = split ("\t", $line);
+	$c = 0;
+		foreach $i (@arr) {
+		$c++;
+			if ($c == 1) {
+			$classid = $i;
+			}elsif ($c == 2) {
+			### Do nothing
+			}else{
+			$hashDataForClasses{$classid}{$i} = 1;
+			$hashAllGenes{$i} = 1;
+			}
+		}
+	}
+}
+close INFILE_GMT;
+
+open OUTFILE_BIN, ">$hashParameters{path_outfiles}/$outfileWOpath_classes.1_0.tsv" or die "Can't open '$hashParameters{path_outfiles}/$outfileWOpath_classes.1_0.tsv'\n\n";
+
+print OUTFILE_BIN "GENES";
+
+foreach $classid (sort keys %hashDataForClasses) {
+print OUTFILE_BIN "\t$classid";
+}
+print OUTFILE_BIN "\n";
+
+foreach $gene (sort keys %hashAllGenes) {
+print OUTFILE_BIN "$gene";
+	foreach $classid (sort keys %hashDataForClasses) {
+		if ($hashDataForClasses{$classid}{$gene}) {
+		print OUTFILE_BIN "\t1.0";
+		}else{
+		print OUTFILE_BIN "\t0.0";
+		}
+	}
+print OUTFILE_BIN "\n";
+}
+close OUTFILE_BIN;
 
 }
 ##<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
