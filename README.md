@@ -75,6 +75,13 @@ Dependencies
   gsea-3.0.jar  can be obtained from http://software.broadinstitute.org/gsea/downloads.jsp  <br />
   Used Java version 1.8.0_162 <br />
 
+  
+Input Datasets
+================
+* Three scRNA-seq datasets that can be used as inputs for these scrips, from liver cells (MacParland et al, 2018), peripheral blood mononuclear cells (PBMCs) (Zheng et al, 2017) and retinal neurons (Shekhar et al, 2016), were processed and curated, and deposited in Zendo:
+https://doi.org/10.5281/zenodo.2575050
+
+
     
 Authors
 ================
