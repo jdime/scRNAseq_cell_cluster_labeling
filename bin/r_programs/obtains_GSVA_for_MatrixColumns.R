@@ -100,7 +100,7 @@ UserHomeDirectory<-system(command = CommandsToGetUserHomeDirectory, input = NULL
 Outdir<-gsub("^~/",paste(c(UserHomeDirectory,"/"), sep = "", collapse = ""), Outdir)
 Tempdir<-gsub("^~/",paste(c(UserHomeDirectory,"/"), sep = "", collapse = ""), Tempdir)
 Outdir<-gsub("/$", "", Outdir)
-Tempdir<-gsub("/$", "", Outdir)
+Tempdir<-gsub("/$", "", Tempdir)
 #
 dir.create(file.path(Outdir, "GSVA"), showWarnings = F, recursive = T)
 dir.create(file.path(Tempdir),        showWarnings = F, recursive = T)
