@@ -129,7 +129,7 @@ UserHomeDirectory<-system(command = CommandsToGetUserHomeDirectory, input = NULL
 Outdir<-gsub("^~/",paste(c(UserHomeDirectory,"/"), sep = "", collapse = ""), Outdir)
 Tempdir<-gsub("^~/",paste(c(UserHomeDirectory,"/"), sep = "", collapse = ""), Tempdir)
 Outdir<-gsub("/$", "", Outdir)
-Tempdir<-gsub("/$", "", Outdir)
+Tempdir<-gsub("/$", "", Tempdir)
 #
 dir.create(file.path(Outdir, "AVERAGE_GENE_EXPRESSION"), recursive = T)
 dir.create(file.path(Tempdir), showWarnings = F, recursive = T)
@@ -235,6 +235,7 @@ writeLines(paste(Outdir,"/AVERAGE_GENE_EXPRESSION/",sep="",collapse = ""))
 
 outfiles_to_move <- list.files(Tempdir,pattern = paste(PrefixOutfiles, ".SEURAT_AverageGeneExpressionPerCluster", sep=""), full.names = F)
 sapply(outfiles_to_move,FUN=function(eachFile){
+  ### using two steps instead of just 'file.rename' to avoid issues with path to ~/temp in cluster systems
   file.copy(from=paste(Tempdir,"/",eachFile,sep=""),to=paste(Outdir,"/AVERAGE_GENE_EXPRESSION/",eachFile,sep=""),overwrite=T)
   file.remove(paste(Tempdir,"/",eachFile,sep=""))
 })
