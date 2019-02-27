@@ -306,6 +306,7 @@ outfiles_to_move <- c(outfiles_to_move, (list.files(Tempdir, pattern = paste(Pre
 outfiles_to_move <- c(outfiles_to_move, (list.files(Tempdir, pattern = paste(PrefixOutfiles, ".PR_interpolated_curves",  sep=""), full.names = F)))
 outfiles_to_move
 sapply(outfiles_to_move,FUN=function(eachFile){
+  ### using two steps instead of just 'file.rename' to avoid issues with path to ~/temp in cluster systems
   file.copy(from=paste(Tempdir,"/",eachFile,sep=""),to=paste(Outdir, "/", eachFile, sep=""),overwrite=T)
   file.remove(paste(Tempdir,"/",eachFile,sep=""))
 })
