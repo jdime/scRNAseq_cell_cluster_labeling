@@ -235,7 +235,9 @@ writeLines(paste(Outdir,"/GSVA/",sep="",collapse = ""))
 
 outfiles_to_move <- list.files(Tempdir,pattern = paste(PrefixOutfiles, ".GSVA_", sep=""), full.names = F)
 sapply(outfiles_to_move,FUN=function(eachFile){
-  file.rename(from=paste(Tempdir,"/",eachFile,sep=""),to=paste(Outdir,"/GSVA/",eachFile,sep=""))
+  ### using two steps instead of just 'file.rename' to avoid issues with path to ~/temp in cluster systems
+  file.copy(from=paste(Tempdir,"/",eachFile,sep=""),to=paste(Outdir,"/GSVA/",eachFile,sep=""),overwrite=T)
+  file.remove(paste(Tempdir,"/",eachFile,sep=""))
 })
 
 ####################################
