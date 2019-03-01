@@ -85,4 +85,4 @@ https://doi.org/10.5281/zenodo.2575050
     
 Authors
 ================
-Javier Diaz (https://github.com/jdime/scRNAseq_cell_cluster_labeling)
+Javier Diaz (https://github.com/jdime)
