@@ -15,18 +15,12 @@
 ####################################
 ### Dependencies:
 ####################################
-### 'optparse'   (CRAN) to handle one-line-commands
-### 'parallel'   (CRAN) to run parallel processes
-### 'data.table' (CRAN) to speed up reading matrices with 'fread' instead of 'read.table'
-### 'GSA'        (CRAN) to handle *gmt infile
-### 'GSVA'       (bioconductor) to run the gsva function
-### 'qvalue'     (bioconductor) to get FDR/q-values from GSVA's p-values
-suppressPackageStartupMessages(library(optparse))
-suppressPackageStartupMessages(library(parallel))
-suppressPackageStartupMessages(library(data.table))
-suppressPackageStartupMessages(library(GSA))
-suppressPackageStartupMessages(library(GSVA))
-suppressPackageStartupMessages(library(qvalue))
+suppressPackageStartupMessages(library(optparse))     # (CRAN) to handle one-line-commands
+suppressPackageStartupMessages(library(parallel))     # (CRAN) to run parallel processes
+suppressPackageStartupMessages(library(data.table))   # (CRAN) to speed up reading matrices with 'fread' instead of 'read.table'
+suppressPackageStartupMessages(library(GSA))          # (CRAN) to handle *gmt infile
+suppressPackageStartupMessages(library(GSVA))         # (bioconductor) to run the gsva function
+suppressPackageStartupMessages(library(qvalue))       # (bioconductor) to get FDR/q-values from GSVA's p-values
 ####################################
 
 ####################################
