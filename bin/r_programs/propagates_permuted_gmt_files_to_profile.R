@@ -19,10 +19,8 @@
 ####################################
 ### Dependencies:
 ####################################
-### 'optparse'   (CRAN) to handle one-line-commands
-### 'GSA'        (CRAN) to handle *gmt infile
-suppressPackageStartupMessages(library(optparse))
-suppressPackageStartupMessages(library(GSA))
+suppressPackageStartupMessages(library(optparse)) # (CRAN) to handle one-line-commands
+suppressPackageStartupMessages(library(GSA))      # (CRAN) to handle *gmt infile
 ####################################
 
 ####################################
