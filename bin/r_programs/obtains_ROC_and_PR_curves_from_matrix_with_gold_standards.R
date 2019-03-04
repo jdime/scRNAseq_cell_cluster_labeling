@@ -21,15 +21,9 @@
 ####################################
 ### Dependencies:
 ####################################
-### R and Rscript (tested with version 3.5.1)
-###
-### R libraries:
-### 'optparse'   (CRAN) to handle one-line-commands
-### 'precrec'    (CRAN) to generate ROC and 'saw-toothed' PR curves, and to get ROC AUC and PR AUC
-### 'ROCR'       (CRAN) to generate interpolated PR curves
-suppressPackageStartupMessages(library(optparse))
-suppressPackageStartupMessages(library(precrec))
-suppressPackageStartupMessages(library(ROCR))
+suppressPackageStartupMessages(library(optparse)) # (CRAN) to handle one-line-commands
+suppressPackageStartupMessages(library(precrec))  # (CRAN) to generate ROC and 'saw-toothed' PR curves, and to get ROC AUC and PR AUC
+suppressPackageStartupMessages(library(ROCR))     # (CRAN) to generate interpolated PR curves
 ####################################
 
 ####################################
