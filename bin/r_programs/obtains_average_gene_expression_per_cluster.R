@@ -20,12 +20,9 @@
 ####################################
 ### Dependencies:
 ####################################
-### 'optparse'   to handle one-line-commands
-### 'Seurat'     to run QC and AverageExpression()
-### 'dplyr'      needed by Seurat for data manupulation
-suppressPackageStartupMessages(library(Seurat))
-suppressPackageStartupMessages(library(dplyr))
-suppressPackageStartupMessages(library(optparse))
+suppressPackageStartupMessages(library(Seurat))       # to run QC, differential gene expression and clustering analyses
+suppressPackageStartupMessages(library(dplyr))        # needed by Seurat for data manupulation
+suppressPackageStartupMessages(library(optparse))     # (CRAN) to handle one-line-commands
 ####################################
 
 ####################################
