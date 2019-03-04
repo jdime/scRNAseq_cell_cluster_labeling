@@ -51,10 +51,8 @@
 ### R and Rscript (tested with version 3.5.1)
 ###
 ### R libraries:
-### 'optparse'   (CRAN) to handle one-line-commands
-### 'vioplot'    (CRAN) to generate violin plots of permutation results
-suppressPackageStartupMessages(library(optparse))
-suppressPackageStartupMessages(library(vioplot))
+suppressPackageStartupMessages(library(optparse)) # (CRAN) to handle one-line-commands
+suppressPackageStartupMessages(library(vioplot))  # (CRAN) to generate violin plots of permutation results
 ###
 ### External scripts (check each script for their own dependencies)
 ### and change their path as needed here:
