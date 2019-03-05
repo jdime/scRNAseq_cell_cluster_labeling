@@ -89,8 +89,8 @@ http://doi.org/10.5281/zenodo.2583161
     
 Issues and feature requests
 ================
-Please use this repository templates available at:
-.github/ISSUE_TEMPLATE
+Please use this repository templates available at:<br />
+`.github/ISSUE_TEMPLATE`
 
 
 Authors
