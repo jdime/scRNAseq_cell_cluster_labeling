@@ -90,7 +90,7 @@ http://doi.org/10.5281/zenodo.2583161
 Issues and feature requests
 ================
 Please use this repository templates available at:<br />
-`.github/ISSUE_TEMPLATE`
+[.github/ISSUE_TEMPLATE](https://github.com/jdime/scRNAseq_cell_cluster_labeling/tree/master/.github/ISSUE_TEMPLATE)
 
 
 Authors
