@@ -86,6 +86,13 @@ Archived code at time of publication
 ================
 http://doi.org/10.5281/zenodo.2583161
     
+    
+Issues and feature requests
+================
+Please use this repository templates available at:
+.github/ISSUE_TEMPLATE
+
+
 Authors
 ================
 Javier Diaz (https://github.com/jdime)
