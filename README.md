@@ -2,7 +2,7 @@
 
 Description
 ================
-This repository contains scripts to run and benchmark scRNA-seq cell cluster labeling methods and is a companion to our paper 'Evaluation of methods to assign cell type labels to cell clusters from single-cell RNA-sequencing data' (Diaz-Mejia JJ et al (2019) [https://www.biorxiv.org/content/10.1101/562082v1].
+This repository contains scripts to run and benchmark scRNA-seq cell cluster labeling methods and is a companion to our paper 'Evaluation of methods to assign cell type labels to cell clusters from single-cell RNA-sequencing data' (Diaz-Mejia JJ et al (2019) [Preprint at F1000Research https://f1000research.com/articles/8-296/v1].
 
 
 Scripts
