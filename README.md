@@ -59,10 +59,13 @@ Dependencies
 ================
 * Check each script code for dependencies and further documentation.
 
-* To install R script dependencies use `install.package()`,  <br />
-  or `install.packages("BiocManager")` and `BiocManager::install()`  <br />
-  The full list of R packages is:  <br />
-  `"optparse", "vioplot", "GSA", "parallel", "data.table", "GSVA", "qvalue", "precrec", "ROCR", "Seurat", "dplyr", "Rserve", "fisher.test", "p.adjust", "e1071", "preprocessCore", "colorRamps"`  <br />
+* To install all R packages use: <br />
+  `install.packages(c("optparse", "vioplot", "GSA", "data.table", "precrec", "ROCR", "Seurat", "dplyr", "Rserve", "e1071", "colorRamps", "stats"))` <br />
+  to install packages from CRAN. <br />
+  And: <br />
+  `install.packages("BiocManager")`  <br />
+  `BiocManager::install(c("preprocessCore", "GSVA", "qvalue"))`  <br />
+  to install packages from Bioconductor <br />
   Used R version 3.5.1  <br />
 
 * To install Perl script dependencies download `perl_modules` directory from this repository  <br />
@@ -71,8 +74,8 @@ Dependencies
   Used Perl version 5  <br />
 
 * The following Java scripts are needed: <br />
-  CIBERSORT.jar can be obtained from https://cibersort.stanford.edu/download.php  <br />
-  gsea-3.0.jar  can be obtained from http://software.broadinstitute.org/gsea/downloads.jsp  <br />
+  `CIBERSORT.jar` can be obtained from https://cibersort.stanford.edu/download.php  <br />
+  `gsea-3.0.jar`  can be obtained from http://software.broadinstitute.org/gsea/downloads.jsp  <br />
   Used Java version 1.8.0_162 <br />
 
   
