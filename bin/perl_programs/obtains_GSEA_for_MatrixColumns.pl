@@ -37,6 +37,8 @@ use Date::Calc qw(Delta_DHMS);
 ### Change here the path to file 'gsea-3.0.jar'
 $GseaExecutable = "~/PROGRAMS/GSEA/gsea-3.0.jar";
 
+$GseaExecutable =~ s/~\//\/$Users_home\/$DefaultUserName\//;
+
 $ThisProgramName = $0;
 $ThisProgramName =~ s/\S+\///;
 
@@ -70,23 +72,24 @@ $CommentsForHelp = "
 ### ----------------------------------------MAIN OUTPUTS-------------------------------------------
 ###
 ### [1]
-### Tables of P-value and FDR values obtained from GSEA for each column of -infile_matrix vs. each gene-class of -infile_classes
+### Tables of P-value and FDR values obtained from GSEA for each column of -infile_matrix vs. each gene-class of -infile_classes,
+### for 
 ###
 ### ------------------------------------------COMMANDS---------------------------------------------
 ###
 ### $ThisProgramName [options]
-###   -path_outfiles      (path/name to the directory where outfiles will be saved)
-###   -prefix_outfiles    (a string for the outfile names)
-###   -infile_matrix      (path/name to the matrix of genes vs. conditions)
-###   -infile_classes     (path/name to either the gene classes)
-###   -nperm              (number of permutations to generate GSEA statistical analyses. GSEA developers recommend minimum '1000')
-###   -use_universe       (indicates set of genes to use as universe from -infile_matrix and/or -infile_classes
-###                        Either 'n1' to use all genes in -infile_matrix,
-###                        Or 'i' to use the intersection of -infile_matrix and -infile_classes)
-###   -cutoff_print_p     (once GSEA is computed, this cutoff selects Nom P-values that will be printed out in summary outfiles (e.g. 0.01))
-###                        Note: also will generate outfiles without filtering neither P-values nor Q-values
-###   -cutoff_print_q     (once GSEA is computed, this cutoff selects FDR Q-values that will be printed out in summary outfiles (e.g. 0.25))
-###                        Note: also will generate outfiles without filtering neither P-values nor Q-values
+###   -path_outfiles    (path/name to the directory where outfiles will be saved)
+###   -prefix_outfiles  (a string for the outfile names)
+###   -infile_matrix    (path/name to the matrix of genes vs. conditions)
+###   -infile_classes   (path/name to either the gene classes)
+###   -nperm            (number of permutations to generate GSEA statistical analyses. GSEA developers recommend minimum '1000')
+###   -use_universe     (indicates set of genes to use as universe from -infile_matrix and/or -infile_classes
+###                      Either 'n1' to use all genes in -infile_matrix,
+###                      Or 'i' to use the intersection of -infile_matrix and -infile_classes)
+###   -cutoff_print_p   (once GSEA is computed, this cutoff selects Nom P-values that will be printed out in summary outfiles (e.g. 0.01))
+###                      Note: also will generate outfiles without filtering neither P-values nor Q-values
+###   -cutoff_print_q   (once GSEA is computed, this cutoff selects FDR Q-values that will be printed out in summary outfiles (e.g. 0.25))
+###                      Note: also will generate outfiles without filtering neither P-values nor Q-values
 ###
 ##################### END INSTRUCTIONS TO RUN THIS PROGRAM ##########################
 #####################################################################################";
@@ -97,12 +100,6 @@ $CommentsForHelp =~ s/(\n####)|(\n###)|(\n##)|(\n#)/\n/g;
 
 &Readme;
 &Parameters;
-
-$GseaExecutable =~ s/~\//\/$Users_home\/$DefaultUserName\//;
-
-unless (-f $GseaExecutable) {
-die "\n\nERROR!!! Couldn't find gsea*jar executable at '$GseaExecutable'\n"
-}
 
 ## By default GSEA plots only the top 20 sets (including detailed reports on 'core' gene sets, necessary to generate gene-level reports
 ## This may not be enough to gather all info needed for the full report on all enriched sets
@@ -115,20 +112,18 @@ unless ($hashParameters{use_universe} =~ /^(i|n1)$/i) {
 die "\n\nERROR!!! unexpected option '-use_universe $hashParameters{use_universe}'\n\n";
 }
 
-############################
-#### Step 1 -- Loading data and preparing infiles for GSEA
-############################
-
-### NOTE: load -infile_classes before -infile_matrix in case '-use_universe i' is used
-
-LoadData::LoadClasses::LoadClasses($hashParameters{infile_classes},"ALL",1,1000000,"NA","NA","yes");
-LoadData::LoadMatrixReturnRnkEachColumnDepurateByMaxValue::LoadMatrixReturnRnkEachColumnDepurateByMaxValue($hashParameters{path_outfiles},$hashParameters{infile_matrix},"NA","NA","NA",$hashParameters{use_universe},\%HashEachKeyClassesPassingCutoff);
+$useForLogOf0 = 0.0000000000001; ### To be use for -log(0) of p-values
 
 ############################
-#### Step 2 -- Sending each column to GSEA
+#### Step 2 -- Check that dependencies are available
 ############################
 
-#Removing previous (presumably aborted) results
+&CheckThatDependenciesAreAvailable();
+
+############################
+#### Step 3 -- Removing previous (presumably aborted) results
+############################
+
 $outdir = "$hashParameters{path_outfiles}/GSEA/$hashParameters{prefix_outfiles}";
 
 if (-d $outdir) {
@@ -137,16 +132,32 @@ print "\n\nWARNING!!! removing preexisting outdir:\n'$outdir'\n";
 }
 system "mkdir -p $outdir";
 
+############################
+#### Step 4 -- Loading data and preparing infiles for GSEA
+############################
+
+### NOTE: load -infile_classes before -infile_matrix in case '-use_universe i' is used
+
+$outfile_filtered_classes = "$hashParameters{path_outfiles}/$outfileWOpath_classes.Filtered.gmt";
+
+LoadData::LoadClasses::LoadClasses($hashParameters{infile_classes},"ALL",1,1000000,"NA","NA","yes",$outfile_filtered_classes);
+LoadData::LoadMatrixReturnRnkEachColumnDepurateByMaxValue::LoadMatrixReturnRnkEachColumnDepurateByMaxValue("$hashParameters{path_outfiles}/GSEA/$hashParameters{prefix_outfiles}",$hashParameters{infile_matrix},"NA","NA","NA",$hashParameters{use_universe},\%HashEachKeyClassesPassingCutoff);
+
+############################
+#### Step 5 -- Sending each column to GSEA
+############################
+
 print "Performing GSEA for each column\n";
 
 ### This will be used to get GSEA computing time
 ($year_gsea1,$month_gsea1,$day_gsea1,$hour_gsea1,$minute_gsea1,$second_gsea1) = split ("_", `date +%Y_%m_%d_%H_%M_%S`);
 
 foreach $c (1..$NumberOfColumnHeaders) {
-$ColumnName = $hashColumnsNames{$c};
-print "\nPerforming '$ColumnName' of '$hashParameters{infile_matrix}' vs. $hashParameters{infile_classes} ($ColumnName.rnk)'\n";
-$InFileName  = "$hashParameters{path_outfiles}/$ColumnName.rnk";
-$OutFileName = "$ColumnName.vs.$outfileWOpath_classes.GSEA";
+$InputtedColumnName = $hashColumnsNames{$c};
+$InFileName  = "$hashParameters{path_outfiles}/GSEA/$hashParameters{prefix_outfiles}/$InputtedColumnName.rnk";
+$OutFileName = "$InputtedColumnName.vs.$outfileWOpath_classes.GSEA";
+
+print "\nPerforming '$InputtedColumnName' of '$hashParameters{infile_matrix}' vs. $hashParameters{infile_classes} ($InFileName)'\n";
 &SendToGseaInBatchVerifyingOutfilesForGeneLevel($InFileName,$OutFileName,$PlotTopFew);
 }
 
@@ -154,124 +165,130 @@ $OutFileName = "$ColumnName.vs.$outfileWOpath_classes.GSEA";
 ($year_gsea2,$month_gsea2,$day_gsea2,$hour_gsea2,$minute_gsea2,$second_gsea2) = split ("_", `date +%Y_%m_%d_%H_%M_%S`);
 
 ############################
-#### Step 3 -- Printing summary out
+#### Step 6 -- Generate outfiles
 ############################
 
-print "Printing summary\n";
+print "Generate outfiles\n";
 
-open SUMMARYPVALALL, ">$outdir/ClassLevel/$hashParameters{prefix_outfiles}.Pval.Unfiltered.mat.txt"                                                        or die "Can't open \"$outdir/ClassLevel/$hashParameters{prefix_outfiles}.Pval.Unfiltered.mat.txt\"\n";
-open SUMMARYPVALFIL, ">$outdir/ClassLevel/$hashParameters{prefix_outfiles}.Pval.P$hashParameters{cutoff_print_p}.Q$hashParameters{cutoff_print_q}.mat.txt" or die "Can't open \"$outdir/ClassLevel/$hashParameters{prefix_outfiles}.GSEA.P$hashParameters{cutoff_print_p}.Q$hashParameters{cutoff_print_q}.Pval.mat.txt\"\n";
-open SUMMARYFDRALL,  ">$outdir/ClassLevel/$hashParameters{prefix_outfiles}.Qval.Unfiltered.mat.txt"                                                        or die "Can't open \"$outdir/ClassLevel/$hashParameters{prefix_outfiles}.Qval.Unfiltered.mat.txt\"\n";
-open SUMMARYFDRFIL,  ">$outdir/ClassLevel/$hashParameters{prefix_outfiles}.Qval.P$hashParameters{cutoff_print_p}.Q$hashParameters{cutoff_print_q}.mat.txt" or die "Can't open \"$outdir/ClassLevel/$hashParameters{prefix_outfiles}.Qval.GSEA.P$hashParameters{cutoff_print_p}.Q$hashParameters{cutoff_print_q}.mat.txt\"\n";
+$hashAllScoreSignsAndClasses{$ScoreSign}{$classid} = 1;
+$hashAllScoreSigns{$ScoreSign} = 1;
 
-print SUMMARYPVALALL "GSEA.NomPvalue.All";
-print SUMMARYPVALFIL "GSEA.NomPvalue.P$hashParameters{cutoff_print_p}.Q$hashParameters{cutoff_print_q}";
-print SUMMARYFDRALL  "GSEA.FDRQvalue.All";
-print SUMMARYFDRFIL  "GSEA.FDRQvalue.P$hashParameters{cutoff_print_p}.Q$hashParameters{cutoff_print_q}";
+### Open outfiles and print top-left corner string
 
-foreach $c (1..$NumberOfColumnHeaders) {
-	if ($hashColumnsNames{$c}) {
-	$ColumnName = $hashColumnsNames{$c};
-	$NumberOfGenes = 0;
-		if ($hashCountScoresPassingCutoffsWONas{$ColumnName}) {
-		$NumberOfGenes = $hashCountScoresPassingCutoffsWONas{$ColumnName};
-		}else{
-		$NumberOfGenes = "NA";
-		}
+foreach $ScoreSign (keys %hashAllScoreSigns) {
+$outmatPAll     =  "$outdir/$hashParameters{prefix_outfiles}.GSEA.Pval.Unfiltered.$ScoreSign.mat.tsv";
+$outmatPFil     =  "$outdir/$hashParameters{prefix_outfiles}.GSEA.Pval.P$hashParameters{cutoff_print_p}.Q$hashParameters{cutoff_print_q}.$ScoreSign.mat.tsv";
+$outmatFdrAll   =  "$outdir/$hashParameters{prefix_outfiles}.GSEA.Qval.Unfiltered.$ScoreSign.mat.tsv";
+$outmatFdrFil   =  "$outdir/$hashParameters{prefix_outfiles}.GSEA.Qval.P$hashParameters{cutoff_print_p}.Q$hashParameters{cutoff_print_q}.$ScoreSign.mat.tsv";
+$outmatPAllmLog =  "$outdir/$hashParameters{prefix_outfiles}.GSEA.Pval.Unfiltered.$ScoreSign.mLog.mat.tsv";
+
+open $outmatPAll  ,   ">$outmatPAll"     or die "Can't open '$outmatPAll'\n";
+open $outmatPFil  ,   ">$outmatPFil"     or die "Can't open '$outmatPFil'\n";
+open $outmatFdrAll,   ">$outmatFdrAll"   or die "Can't open '$outmatFdrAll'\n";
+open $outmatFdrFil,   ">$outmatFdrFil"   or die "Can't open '$outmatFdrFil'\n";
+open $outmatPAllmLog, ">$outmatPAllmLog" or die "Can't open '$outmatPAllmLog'\n";
+
+print $outmatPAll     "Pvalue.All";
+print $outmatPFil     "Pvalue.P$hashParameters{cutoff_print_p}.Q$hashParameters{cutoff_print_q}";
+print $outmatFdrAll   "FDRQvalue.All";
+print $outmatFdrFil   "FDRQvalue.P$hashParameters{cutoff_print_p}.Q$hashParameters{cutoff_print_q}";
+print $outmatPAllmLog "Pvalue.All.mLog";
+
+	### Print column headers
 	
-	print SUMMARYPVALALL "\t$ColumnName";
-	print SUMMARYPVALFIL "\t$ColumnName";
-	print SUMMARYFDRALL  "\t$ColumnName";
-	print SUMMARYFDRFIL  "\t$ColumnName";
-	}else{
-	die "\n\nERROR!!! couldn't find $hashColumnsNames{$c}\n";
-	}
-}
-print SUMMARYPVALALL "\n";
-print SUMMARYPVALFIL "\n";
-print SUMMARYFDRALL  "\n";
-print SUMMARYFDRFIL  "\n";
-	
-foreach $TypeOfScoreClass (sort keys %hashAllClassesTypes) {
-($typeOfScore,$classid) = split ("\t", $TypeOfScoreClass);
-$ClassDetailsPartA = "";
-$ClassDetailsPartB = "";
-$ToPrintConcatenatedCpvalAll = "";
-$ToPrintConcatenatedCqvalAll = "";
-$ToPrintConcatenatedCpvalFiltered = "";
-$ToPrintConcatenatedCqvalFiltered = "";
-
-	if ($HashClassRename{$classid}) {
-	$ClassName = $HashClassRename{$classid};
-	}else{
-	$ClassName = $ClassName;
+	foreach $classid (sort keys %{$hashAllScoreSignsAndClasses{$ScoreSign}}) {
+	print $outmatPAll     "\t$classid";
+	print $outmatPFil     "\t$classid";
+	print $outmatFdrAll   "\t$classid";
+	print $outmatFdrFil   "\t$classid";
+	print $outmatPAllmLog "\t$classid";
 	}
 
-$ClassDetailsPartA = "$typeOfScore.$classid";
+	print $outmatPAll     "\n";
+	print $outmatPFil     "\n";
+	print $outmatFdrAll   "\n";
+	print $outmatFdrFil   "\n";
+	print $outmatPAllmLog "\n";
+		
+	### Print row headers and data
 
 	foreach $c (1..$NumberOfColumnHeaders) {
 		if ($hashColumnsNames{$c}) {
-		$ColumnName = $hashColumnsNames{$c};
+		$InputtedColumnName = $hashColumnsNames{$c};
 
-		$PassPvalueFilter = 0;
-		$PassQvalueFilter = 0;
+		$ToPrintConcatenatedPvalAll     = "";
+		$ToPrintConcatenatedQvalAll     = "";
+		$ToPrintConcatenatedPvalFil     = "";
+		$ToPrintConcatenatedQvalFil     = "";
+		$ToPrintConcatenatedPvalAllmLog = "";
 		
-			if ($hashSummary{$ColumnName}{$TypeOfScoreClass}{nompval}) {
-			$nompval = $hashSummary{$ColumnName}{$TypeOfScoreClass}{nompval};
-			$nompval =~ s/_//;
-				if ($hashSummary{$ColumnName}{$TypeOfScoreClass}{real}) {
-				$size = $hashSummary{$ColumnName}{$TypeOfScoreClass}{real};
+			foreach $classid (sort keys %{$hashAllScoreSignsAndClasses{$ScoreSign}}) {
+			$PassPvalueFilter = 0;
+			$PassQvalueFilter = 0;
+
+				if ($hashSummary{$InputtedColumnName}{$ScoreSign}{$classid}{nompval}) {
+				$nompval = $hashSummary{$InputtedColumnName}{$ScoreSign}{$classid}{nompval};
+				$nompval =~ s/_//;
+					if ($nompval <= $hashParameters{cutoff_print_p}) {
+					$PassPvalueFilter = 1;
+					}
+
+					if ($nompval == 0) {
+					$d = $useForLogOf0;
+					}else{
+					$d = $nompval;
+					}
+				$mLogNompval = log($d) * -1;
+					
+				}else{
+				$nompval = "NA";
+				$mLogNompval = "NA";
 				}
-				if ($nompval <= $hashParameters{cutoff_print_p}) {
-				$PassPvalueFilter = 1;
-				}
-			}else{
-			$nompval = "NA";
-			}
 	
-			if ($hashSummary{$ColumnName}{$TypeOfScoreClass}{fdrqval}) {
-			$fdrqval = $hashSummary{$ColumnName}{$TypeOfScoreClass}{fdrqval};
-			$fdrqval =~ s/_//;
-				if ($fdrqval <= $hashParameters{cutoff_print_q}) {
-				$PassQvalueFilter = 1;
+				if ($hashSummary{$InputtedColumnName}{$ScoreSign}{$classid}{fdrqval}) {
+				$fdrqval = $hashSummary{$InputtedColumnName}{$ScoreSign}{$classid}{fdrqval};
+				$fdrqval =~ s/_//;
+					if ($fdrqval <= $hashParameters{cutoff_print_q}) {
+					$PassQvalueFilter = 1;
+					}
+				}else{
+				$fdrqval = "NA";
 				}
-			}else{
-			$fdrqval = "NA";
+
+				if (($PassPvalueFilter == 1) && ($PassQvalueFilter == 1)) {
+				$ToPrintConcatenatedPvalFil .= "\t$nompval";
+				$ToPrintConcatenatedQvalFil .= "\t$fdrqval";
+				}elsif ($nompval =~ /\d/) {
+				$ToPrintConcatenatedPvalFil .= "\tNS";
+				$ToPrintConcatenatedQvalFil .= "\tNS";
+				}else{
+				$ToPrintConcatenatedPvalFil .= "\tNA";
+				$ToPrintConcatenatedQvalFil .= "\tNA";
+				}
+			$ToPrintConcatenatedPvalAll     .= "\t$nompval";
+			$ToPrintConcatenatedQvalAll     .= "\t$fdrqval";
+			$ToPrintConcatenatedPvalAllmLog .= "\t$mLogNompval";
 			}
-	
-			if (($PassPvalueFilter == 1) && ($PassQvalueFilter == 1)) {
-			$ToPrintConcatenatedCpvalFiltered .= "\t$nompval";
-			$ToPrintConcatenatedCqvalFiltered .= "\t$fdrqval";
-			}elsif ($nompval =~ /\d/) {
-			$ToPrintConcatenatedCpvalFiltered .= "\tNS";
-			$ToPrintConcatenatedCqvalFiltered .= "\tNS";
-			}else{
-			$ToPrintConcatenatedCpvalFiltered .= "\t$nompval";
-			$ToPrintConcatenatedCqvalFiltered .= "\t$fdrqval";
-			}
-		$ToPrintConcatenatedCpvalAll .= "\t$nompval";
-		$ToPrintConcatenatedCqvalAll .= "\t$fdrqval";
+		$ToPrintConcatenatedPvalAll     =~ s/^\t//;
+		$ToPrintConcatenatedQvalAll     =~ s/^\t//;
+		$ToPrintConcatenatedPvalFil     =~ s/^\t//;
+		$ToPrintConcatenatedQvalFil     =~ s/^\t//;
+		$ToPrintConcatenatedPvalAllmLog =~ s/^\t//;
+		
+		print $outmatPAll     "$InputtedColumnName\t$ToPrintConcatenatedPvalAll\n";
+		print $outmatFdrAll   "$InputtedColumnName\t$ToPrintConcatenatedQvalAll\n";
+		print $outmatPFil     "$InputtedColumnName\t$ToPrintConcatenatedPvalFil\n";
+		print $outmatFdrFil   "$InputtedColumnName\t$ToPrintConcatenatedQvalFil\n";
+		print $outmatPAllmLog "$InputtedColumnName\t$ToPrintConcatenatedPvalAllmLog\n";
 		}
 	}
-$ClassDetailsPartB = "$size.$ClassName";
-	unless ($hashYaPrintClassName{$classid}) {
-	$hashYaPrintClassName{$classid} = 1;
-	}
-	
-$ToPrintConcatenatedCpvalAll =~ s/^\t//;
-$ToPrintConcatenatedCqvalAll =~ s/^\t//;
-$ToPrintConcatenatedCpvalFiltered =~ s/^\t//;
-$ToPrintConcatenatedCqvalFiltered =~ s/^\t//;
-
-print SUMMARYPVALALL "$ClassDetailsPartA.$ClassDetailsPartB\t$ToPrintConcatenatedCpvalAll\n";
-print SUMMARYFDRALL  "$ClassDetailsPartA.$ClassDetailsPartB\t$ToPrintConcatenatedCqvalAll\n";
-print SUMMARYPVALFIL "$ClassDetailsPartA.$ClassDetailsPartB\t$ToPrintConcatenatedCpvalFiltered\n";
-print SUMMARYFDRFIL  "$ClassDetailsPartA.$ClassDetailsPartB\t$ToPrintConcatenatedCqvalFiltered\n";
+close $outmatPAll;
+close $outmatPFil;
+close $outmatFdrAll;
+close $outmatFdrFil;
+close $outmatPAllmLog;
 }
-close SUMMARYPVALALL;
-close SUMMARYFDRALL;
-close SUMMARYPVALFIL;
-close SUMMARYFDRFIL;
+
 
 $lookOrignalColumnNamesFile = "$outfileWOpath_matrix.OriginalColNames.txt";
 if (-f $lookOrignalColumnNamesFile) {
@@ -279,18 +296,18 @@ if (-f $lookOrignalColumnNamesFile) {
 }
 
 ############################
-#### Step 4 -- Generating log file with parameters used in the run
+#### Step 7 -- Generating log file with parameters used in the run
 ############################
 
 &PrintParameters;
 
 ############################
-#### Step 5 -- Remove temporary files
+#### Step 8 -- Remove temporary files
 ############################
 
 print "Removing temporary files\n";
 
-`rm $hashParameters{infile_classes}.Filtered.gmt`;
+`rm $outfile_filtered_classes`;
 
 $date = `date`;
 if ($date =~ /^(\S+\s+)(\S+)(\s+)(\S+)/) {
@@ -319,16 +336,15 @@ $deletedate =~ tr/[A-Z]/[a-z]/;
 }
 
 foreach $c (1..$NumberOfColumnHeaders) {
-$ColumnName = $hashColumnsNames{$c};
-$InFileName  = "$hashParameters{path_outfiles}/$ColumnName.rnk";
-$OutFileName = "$ColumnName.vs.$outfileWOpath_classes.GSEA";
+$InputtedColumnName = $hashColumnsNames{$c};
+$InFileName  = "$hashParameters{path_outfiles}/GSEA/$hashParameters{prefix_outfiles}/$InputtedColumnName.rnk";
+$OutFileName = "$InputtedColumnName.vs.$outfileWOpath_classes.GSEA";
 system "rm $InFileName";
-system "rm -r $outdir/ClassLevel/$OutFileName\.GseaPreranked\.[0-9]*[0-9]/";
+system "rm -r $outdir/$OutFileName\.GseaPreranked\.[0-9]*[0-9]/";
 }
 
-
 ############################
-#### Step 7 -- Report run time
+#### Step 9 -- Report run time
 ############################
 
 ### This will be used to get overall computing time
@@ -364,7 +380,7 @@ gsea\t$all_gsea_seconds\tsecs
 overall\t$all_overall_seconds\tsecs\n";
 
 ############################
-#### Step 8 -- Finishing program
+#### Step 10 -- Finishing program
 ############################
 
 print "\n  Done!!!\n\nGSEA conducted for:\n'$hashParameters{infile_matrix}'\nvs.\n'$hashParameters{infile_classes}'\n\nCheck directory:\n$outdir\n\n";
@@ -422,14 +438,16 @@ unless (-d $hashParameters{path_outfiles}) {
 }
 
 ## Defining prefix string for OUTFILE
-ReformatPerlEntities::ObtainOutfileWOpath::ObtainOutfileWOpath($hashParameters{infile_matrix});
-$outfileWOpath_matrix = $outfileWOpath;
 
 if ($hashParameters{infile_classes} =~ /-/) {
 die "\n\nERROR!!! GSEA can't handle en dashes '-' in file names:\n'$hashParameters{infile_classes}'\n\n";
 }
 ReformatPerlEntities::ObtainOutfileWOpath::ObtainOutfileWOpath($hashParameters{infile_classes});
 $outfileWOpath_classes = $outfileWOpath;
+
+ReformatPerlEntities::ObtainOutfileWOpath::ObtainOutfileWOpath($hashParameters{infile_matrix});
+$outfileWOpath_matrix = $outfileWOpath;
+
 
 #### Ends -- Evaluate parameters
 #######################
@@ -476,7 +494,7 @@ my ($InFileName,$OutFileName,$PlotTop) = @_;
 
 ### Here removing files from previous runs (if any)
 $DirectoryFromPreviousRunName = "";
-$DirectoryFromPreviousRunLook = "$outdir/ClassLevel/$OutFileName\.GseaPreranked\.[0-9]*[0-9]";
+$DirectoryFromPreviousRunLook = "$outdir/$OutFileName\.GseaPreranked\.[0-9]*[0-9]";
 
 if (-d $DirectoryFromPreviousRunLook) {
 $DirectoriesFromPreviousRunName = `ls -d $DirectoryFromPreviousRunLook`;
@@ -490,7 +508,7 @@ if ($DirectoriesFromPreviousRunName =~ /\S/) {
 }
 
 $CommandToSend = "java -cp $GseaExecutable -Xmx1024m xtools.gsea.GseaPreranked \\
--gmx $hashParameters{infile_classes}.Filtered.gmt \\
+-gmx $outfile_filtered_classes \\
 -norm meandiv \\
 -nperm $hashParameters{nperm} \\
 -rnk $InFileName \\
@@ -502,7 +520,7 @@ $CommandToSend = "java -cp $GseaExecutable -Xmx1024m xtools.gsea.GseaPreranked \
 -set_max 1000000 \\
 -set_min 1 \\
 -zip_report false \\
--out $outdir/ClassLevel \\
+-out $outdir \\
 -gui false";
 
 ### These commands from gsea2.jar dissapear in gsea-3.0.jar
@@ -522,20 +540,17 @@ print "\n\nRUNNING\n$CommandToSend\n\n";
 system "$CommandToSend";
 
 ### Compiling results for summary
-$baseForNegClassLevelReports = "";
-$baseForPosClassLevelReports = "";
-	
 $resultsNeg = "";
 $resultsPos = "";
-$resultsNeg = `ls $outdir/ClassLevel/$OutFileName\.GseaPreranked\.[0-9]*[0-9]/gsea_report_for_na_neg_[0-9]*[0-9]\.xls`;
-$resultsPos = `ls $outdir/ClassLevel/$OutFileName\.GseaPreranked\.[0-9]*[0-9]/gsea_report_for_na_pos_[0-9]*[0-9]\.xls`;
+$resultsNeg = `ls $outdir/$OutFileName\.GseaPreranked\.[0-9]*[0-9]/gsea_report_for_na_neg_[0-9]*[0-9]\.xls`;
+$resultsPos = `ls $outdir/$OutFileName\.GseaPreranked\.[0-9]*[0-9]/gsea_report_for_na_pos_[0-9]*[0-9]\.xls`;
 
 	if ($resultsNeg =~ /\S/ && $resultsPos =~ /\S/) {
 	@FilesForMatrix = ($resultsNeg,$resultsPos);
 		foreach $filereport (@FilesForMatrix) {
 		chomp $filereport;
 			if ($filereport =~ /(\S+\d+)(\/gsea_report_for_na_)([a-z]+)(_\d+)/) {
-			$typeOfScore = $3;
+			$ScoreSign = $3;
 			$baseFromReport = "$1";
 			open REPORT, "<$filereport" or die "Can't open '$filereport'\n";
 			$van = 0;
@@ -544,9 +559,9 @@ $resultsPos = `ls $outdir/ClassLevel/$OutFileName\.GseaPreranked\.[0-9]*[0-9]/gs
 					unless ($van == 1) {
 					@arr = split ("\t", $line);
 					$classid = @arr[0];
-					$size = @arr[3];
-					$es =  @arr[4];
-					$nes =  @arr[5];
+					$size    = @arr[3];
+					$es      = @arr[4];
+					$nes     = @arr[5];
 					$nompval = @arr[6];
 					$fdrqval = @arr[7];
 					
@@ -560,11 +575,10 @@ $resultsPos = `ls $outdir/ClassLevel/$OutFileName\.GseaPreranked\.[0-9]*[0-9]/gs
 							}
 						}
 					
-					$TypeOfScoreClass = "$typeOfScore\t$classid";
-					$hashSummary{$ColumnName}{$TypeOfScoreClass}{nompval} = "_$nompval";
-					$hashSummary{$ColumnName}{$TypeOfScoreClass}{fdrqval} = "_$fdrqval";
-					$hashSummary{$ColumnName}{$TypeOfScoreClass}{real} = $size;
-					$hashAllClassesTypes{$TypeOfScoreClass} = 1;
+					$hashSummary{$InputtedColumnName}{$ScoreSign}{$classid}{nompval} = "_$nompval";
+					$hashSummary{$InputtedColumnName}{$ScoreSign}{$classid}{fdrqval} = "_$fdrqval";
+					$hashAllScoreSignsAndClasses{$ScoreSign}{$classid} = 1;
+					$hashAllScoreSigns{$ScoreSign} = 1;
 					
 					### Here checking that enriched class specific files are available. If not, run the GSEA for this column again
 						if ($nompval <= $hashParameters{cutoff_print_p} && $fdrqval <= $hashParameters{cutoff_print_q}) {
@@ -588,5 +602,69 @@ $resultsPos = `ls $outdir/ClassLevel/$OutFileName\.GseaPreranked\.[0-9]*[0-9]/gs
 	}else{
 	die "\n\nERROR!!! couldn't get reports for '$OutFileName'\n";
 	}
+}
+##<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+sub CheckThatDependenciesAreAvailable {
+
+### Checking that java v1.8 or v1.9 is available
+
+print "Checking that java v1.8 or v1.9 is available\n";
+
+	sub GetJavaVersion {
+	$java_version = "";
+	`java -version 2> $hashParameters{path_outfiles}/java_check.txt`;
+	$java_version = `sed -n 1p $hashParameters{path_outfiles}/java_check.txt`;
+	chomp $java_version;
+	sleep 1;
+	return $java_version;
+	}
+
+
+&GetJavaVersion();
+if ($java_version =~ /(java|openjdk) version \"1\.[8|9]/) {
+print "\tOK - found $java_version\n";
+}else{
+`module load java`;
+sleep 5;
+&GetJavaVersion();
+	if ($java_version =~ /(java|openjdk) version \"1\.[8|9]/) {
+	print "\tOK - found $java_version\n";
+	}else{
+	die "\n\nERROR!!! Couldn't find java (v1.8* or 1.9*) available\n"
+	}
+
+}
+
+### Checking that GSEA is available
+
+print "Checking that GSEA is available\n";
+
+$GseaExecutable =~ s/~\//\/$Users_home\/$DefaultUserName\//;
+
+### Checking if 'scratch' directory is available
+
+$HomeUserDir = "\/$Users_home\/$DefaultUserName\/";
+$ScratchUserDir = $HomeUserDir;
+$ScratchUserDir =~ s/home/scratch/;
+
+### Checking if 'scratch' contains a gsea-3.0.jar copy
+### will use that one to write to cache files into scratch
+
+if (-d $ScratchUserDir) {
+$GseaExecutableInScratch = $GseaExecutable;
+$GseaExecutableInScratch =~ s/home/scratch/;
+	if (-f $GseaExecutableInScratch) {
+	$GseaExecutable = $GseaExecutableInScratch;
+	}
+}
+
+if (-f $GseaExecutable) {
+print "\tOK - found $GseaExecutable\n";
+}else{
+die "\n\nERROR!!! Couldn't find gsea-3.0.jar executable at '$GseaExecutable'\n"
+}
+
 }
 ##<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
