@@ -13,10 +13,12 @@ Dependencies
 * To install R script dependencies use `install.package()`, 
   or `install.packages("BiocManager")` and `BiocManager::install()` 
   The full list of R packages is: 
-  `"optparse", "vioplot", "GSA", "parallel", "data.table", "GSVA", "qvalue", "precrec", "ROCR", "Seurat", "dplyr", "Rserve", "fisher.test", "p.adjust"`
+  `"optparse", "vioplot", "GSA", "parallel", "data.table", "GSVA", "qvalue", "precrec", "ROCR", "Seurat", "dplyr", "Rserve", "fisher.test", "p.adjust", "SummarizedExperiment", "MetaNeighbor"`
 * To install Perl script dependencies download `perl_modules` directory from this repository 
   and add it to your `PERL5LIB` environment variable.
   Other Perl modules required are: `Date::Calc` which can be installed from CPAN
+* Note modifications to the R library(MetaNeighbor) source code were made
+  See: `bin/r_programs/obtains_METANEIGHBOR_for_MatrixColumns.R` for details
 * The following Java scripts are needed:
   CIBERSORT.jar can be obtained from https://cibersort.stanford.edu/download.php 
   gsea-3.0.jar  can be obtained from http://software.broadinstitute.org/gsea/downloads.jsp
