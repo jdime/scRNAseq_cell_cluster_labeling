@@ -139,6 +139,8 @@ if (grepl(pattern = "^[0-9]+-[0-9]+$", ignore.case = T, x = Iterations) == T) {
 ####################################
 writeLines("\n*** Get values to replace ***\n")
 
+cat(InfileProfile)
+
 OriginalMat<-read.table(InfileProfile,header = T, row.names = 1, sep = "\t")
 
 ### Get values to replace
@@ -150,6 +152,10 @@ if (grepl(pattern = "^median$|^mean$|^min$", ignore.case = T, x = ValueReplacing
     ValuesReplacing[[colName]] <- ValueReplacing
   }
 }
+
+writeLines("\n*** END Get values to replace ***\n")
+
+
 
 ####################################
 ###  Load full gmt file
