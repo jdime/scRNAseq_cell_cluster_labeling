@@ -36,7 +36,8 @@
 ###        a) add the path to the executable in 'Dependencies:'
 ###        b) provide inputs and parameters adding commands indicated by 'Runs NEW_METHOD and gather its outputs'
 ###        c) add program name to this script 'option_list' parameters --software_to_run and --software_to_auc
-###        d) add program name to script 'obtains_performance_plots_from_cluster_labelings.pl' so that it can take a 'Generic_ES' infile
+###        d) add program name to script 'obtains_performance_plots_from_cluster_labelings.pl' so that it can load its predictions outfile
+###        e) assign a colour from list(ColourDefinitions) to the new method at list(ListColoursViolin)
 ###
 ####################################
 ### Questions/comments to Javier Diaz - javier.diazmejia@gmail.com
