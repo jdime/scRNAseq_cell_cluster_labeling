@@ -36,29 +36,36 @@ options( warn = -1 )
 option_list <- list(
   make_option(c("-i", "--infile_mat"), default="NA",
               help="A path/name to a <tab> delimited *file* with genes in rows and arrays (e.g. clusters or conditions) in columns, like:
-              genes  clust1  clust2  clust3 ... etc
-              RP113  0       0.0045  0.0008
-              FAM14  0.0077  0.0175  0.0082
-              NOC2L  0.0800  0.1532  0.0745
-              ...etc"),
+                genes  clust1  clust2  clust3 ... etc
+                RP113  0       0.0045  0.0008
+                FAM14  0.0077  0.0175  0.0082
+                NOC2L  0.0800  0.1532  0.0745
+                ...etc
+                Default = 'No default. It's mandatory to specify this parameter'"),
 
   make_option(c("-c", "--infile_gmt"), default="NA",
               help="A path/name to a <tab> delimited *file* of gene sets in *gmt format, like:
-              GeneSet1_ID  GeneSet1_Name  Gene1 Gene2 Gene3
-              GeneSet2_ID  GeneSet2_Name  Gene4 Gene5
-              ... etc"),
-
+                GeneSet1_ID  GeneSet1_Name  Gene1 Gene2 Gene3
+                GeneSet2_ID  GeneSet2_Name  Gene4 Gene5
+                ... etc
+                Default = 'No default. It's mandatory to specify this parameter'"),
+  
   make_option(c("-o", "--outdir"), default="NA",
-              help="A path/name for the results directory"),
+              help="A path/name for the results directory
+                Default = 'No default. It's mandatory to specify this parameter'"),
   
   make_option(c("-p", "--prefix_outfiles"), default="NA",
-              help="A prefix for outfile names, e.g. your project ID"),
+              help="A prefix for outfile names, e.g. your project ID
+                Default = 'No default. It's mandatory to specify this parameter'"),
   
   make_option(c("-e", "--pvalue_cutoff"), default="0.05",
-              help="This script produce a *filtered.tsv matrix with pairs passing -e and -f filters and unfiltered outfiles"),
-  
+              help="This script produce a *filtered.tsv matrix with pairs passing -e and -f filters and unfiltered outfiles
+                Default = 0.05"),
+
   make_option(c("-f", "--fdr_cutoff"), default="0.1",
-              help="Same as -e option, but for FDR scores")
+              help="Same as -e option, but for FDR scores
+                Default = 0.1")
+  
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))
@@ -69,6 +76,7 @@ Outdir          <- opt$outdir
 PrefixOutfiles  <- opt$prefix_outfiles
 PvalueCutoff    <- as.numeric(opt$pvalue_cutoff)
 FdrCutoff       <- as.numeric(opt$fdr_cutoff)
+
 Tempdir         <- "~/temp" ## Using this for temporary storage of outfiles because sometimes long paths of outdirectories casuse R to leave outfiles unfinished
 
 StartTimeOverall<-Sys.time()
@@ -76,6 +84,7 @@ StartTimeOverall<-Sys.time()
 ####################################
 ### Check that mandatory parameters are not 'NA' (default)
 ####################################
+writeLines("\n*** Check that mandatory parameters are not 'NA' (default) ***\n")
 
 ListMandatory<-list("infile_mat", "infile_gmt", "outdir", "prefix_outfiles")
 for (param in ListMandatory) {
@@ -95,7 +104,18 @@ Outdir<-gsub("^~/",paste(c(UserHomeDirectory,"/"), sep = "", collapse = ""), Out
 Tempdir<-gsub("^~/",paste(c(UserHomeDirectory,"/"), sep = "", collapse = ""), Tempdir)
 Outdir<-gsub("/$", "", Outdir)
 Tempdir<-gsub("/$", "", Tempdir)
-#
+
+### Checking if the system follows a mirror /scratch vs. /home structure
+### If that's the case, this script will use Tempdir at /scratch, not at /home
+### This is because systems like SciNet (Compute Canada) using 'Slurm Workload Manager'
+### only allow to write in /scratch when using slave nodes, not in /home
+### Comment the following '4' lines if you have a mirror structure and still want to use /home (called /Users in Mac)
+### If you don't have a mirror structure just ignore this
+ScratchTempdir<-gsub("home","scratch", Tempdir)
+if (dir.exists(ScratchTempdir)[1] == 1) {
+  Tempdir<-ScratchTempdir
+}
+
 dir.create(file.path(Outdir, "GSVA"), showWarnings = F, recursive = T)
 dir.create(file.path(Tempdir),        showWarnings = F, recursive = T)
 
@@ -110,7 +130,7 @@ OutfileFilteredES      <-paste(Tempdir,"/",PrefixOutfiles,".GSVA_filtered.tsv", 
 ####################################
 writeLines("\n*** Load data ***\n")
 
-### Creating object fullmat with the matrix of genes(rows) vs. arrays(columns)
+### Creating object fullmat with the matrix of genes (rows) vs. cell clusters (columns)
 fullmat<-as.matrix(data.frame(fread(InfileMat, sep="\t", na.strings=c("NA")), row.names=1))
 
 ### Creates object gmt2 with the gene set memberships
@@ -128,7 +148,7 @@ SortedRowNames<-rownames(EnrichmentScores)
 SortedColNames<-colnames(EnrichmentScores)
 #
 EnrichmentScores<-EnrichmentScores[SortedRowNames,SortedColNames]
-write.table(data.frame("ENRICHMENT"=rownames(EnrichmentScores), EnrichmentScores), OutfileEnrichmentScores, row.names = F,sep="\t",quote = F)
+write.table(data.frame("ENRICHMENT"=colnames(EnrichmentScores), t(EnrichmentScores)), OutfileEnrichmentScores, row.names = F,sep="\t",quote = F)
 
 ### maps gene set members from gmt2
 Classes.list<-NULL
