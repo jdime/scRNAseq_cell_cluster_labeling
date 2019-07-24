@@ -67,7 +67,6 @@ my($parameterKey,$value) = @_;
 		unless ($value =~ /(^-\d+$)|(^-\d+\.\d+$)|(^NA$)|(^default$)/i) {
 		die "ERROR!!! Reading parameter '$parameterKey' value '$value' don't match expected format\n";
 		}
-	
 
 	}elsif ($parameterKey =~ /(^cutoff_ora$)/) {
 	### Positive values or NA or DEFAULT
@@ -75,13 +74,11 @@ my($parameterKey,$value) = @_;
 		die "ERROR!!! Reading parameter '$parameterKey' value '$value' don't match expected format\n";
 		}
 
-
 	}elsif ($parameterKey =~ /(^cutoff_pos$)/) {
 	### Positive values or NA or DEFAULT
 		unless ($value =~ /(^\d+$)|(^\d+\.\d+$)|(^NA$)|(^default$)/i) {
 		die "ERROR!!! Reading parameter '$parameterKey' value '$value' don't match expected format\n";
 		}
-
 
 	}elsif ($parameterKey =~ /(^cutoff_print_p$)/) {
 	### Positive values or NA or DEFAULT
@@ -89,39 +86,33 @@ my($parameterKey,$value) = @_;
 		die "ERROR!!! Reading parameter '$parameterKey' value '$value' don't match expected format\n";
 		}
 
-
 	}elsif ($parameterKey =~ /(^cutoff_print_q$)/) {
 	### Positive values or NA or DEFAULT
 		unless ($value =~ /(^\d+$)|(^\d+\.\d+$)|(^NA$)|(^default$)/i) {
 		die "ERROR!!! Reading parameter '$parameterKey' value '$value' don't match expected format\n";
 		}
 
+	}elsif ($parameterKey =~ /(^lwd$)/) {
+	### Positive values or NA or DEFAULT
+		unless ($value =~ /(^\d+$)|(^\d+\.\d+$)|(^NA$)|(^default$)/i) {
+		die "ERROR!!! Reading parameter '$parameterKey' value '$value' don't match expected format\n";
+		}
 
 	}elsif ($parameterKey =~ /(^nperm$)/) {
 	### Positive values. Don't allow 'NA'
 		unless ($value =~ /(^\d+$)|(^\d+\.\d+$)/) {
 		die "ERROR!!! Reading parameter '$parameterKey' value '$value' don't match expected format\n";
 		}
-	
 
 	}elsif ($parameterKey =~ /(^p_correction_test$)/) {
 		unless ($value =~ /(^BY$)|(^BH$)|(^bonferroni$)/) {
 		die "ERROR!!! Reading parameter '$parameterKey' value '$value' don't match expected format\n";
 		}
 
-	}elsif ($parameterKey =~ /(^set_max$)/) {
-	### Positive values. Don't allow 'NA'
-		unless ($value =~ /(^\d+$)|(^\d+\.\d+$)/) {
+	}elsif ($parameterKey =~ /(^print_plot_ticks_labels_legend$)/) {
+		unless ($value =~ /(^all$)|(^ticks$)|(^legend$)|(^label_tick$)|(^none$)|(^NA$)/i) {
 		die "ERROR!!! Reading parameter '$parameterKey' value '$value' don't match expected format\n";
 		}
-	
-
-	}elsif ($parameterKey =~ /(^set_min$)/) {
-	### Positive values. Don't allow 'NA'
-		unless ($value =~ /(^\d+$)|(^\d+\.\d+$)/) {
-		die "ERROR!!! Reading parameter '$parameterKey' value '$value' don't match expected format\n";
-		}
-	
 
 	}elsif ($parameterKey =~ /(^use_graphics_device$)/) {
 		unless ($value =~ /^(pdf|png|NA)$/i) {
@@ -177,67 +168,6 @@ my($parameterKey,$file) = @_;
 	}elsif (-f $file) {
 	}else{
 	die "ERROR!!! Reading parameter '$parameterKey' couldn't find file '$file'\n";
-	}
-}
-
-##<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-sub Evaluate_numb_cols {
-my($parameterKey,$numb_cols) = @_;
-
-	if ($parameterKey =~ /cols|column/) {
-	$optionForOutputToScreens = "columns";
-	}else{
-	$optionForOutputToScreens = "options";
-	}
-
-	if ($numb_cols =~ /(\d+)/) {
-	chomp $numb_cols;
-		
-	### here indexing by $parameterKey in case multiple calls of 'column_*' are made
-		if ($parameterKey =~ /^column_/) {
-		$hashColumnKeyToColumnNumber{$parameterKey} = $numb_cols;
-		}
-
-	@Cols = split (",", $numb_cols);
-		foreach $cc (@Cols) {
-			if ($cc =~ /^\d+$/) {
-			$hash_numb_cols{$cc} = 1;
-			}elsif ($cc =~ /^(\d+)(-)(\d+)$/) {
-			$start = $1;
-			$end = $3;
-				foreach $c ($start..$end) {
-				$hash_numb_cols{$c} = 1;
-				}
-			}else{
-			die "ERROR!!! Reading parameter '$parameterKey'  couldn't determine $optionForOutputToScreens to process from '$cc'\n";
-			}
-		}
-
-	print "The following $optionForOutputToScreens will be processed:\n";
-
-		foreach $c (sort { $a <=> $b } keys %hash_numb_cols) {
-		print "$c\n";
-		}
-
-	}elsif ($numb_cols =~ /^(ALL)$/i) {
-	print "All $optionForOutputToScreens will be processed\n";
-	}elsif ($numb_cols =~ /^(NA)$/i) {
-	}else{
-	die "ERROR!!! Reading parameter '$parameterKey' couldn't determine $optionForOutputToScreens to process from '$numb_cols'\n";
-	}
-}
-
-##<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-sub Evaluate_restrict_classes {
-my($parameterKey,$file_or_all) = @_;
-	if ($file_or_all =~ /^all$/i) {
-	}elsif (-f $file_or_all) {
-	}else{
-	die "ERROR!!! Reading parameter '$parameterKey' couldn't find file '$file_or_all' to restrict classes and no 'ALL' command was readed\n";
 	}
 }
 

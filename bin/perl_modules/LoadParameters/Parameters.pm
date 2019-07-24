@@ -100,6 +100,8 @@ my($In_hashParametersTolookFor,$In_arrayInputtedOneLineCommands) = @_;
 			}elsif ($parameterKey =~ /(^prefix)/) {
 			### these are parameters which only need to check that are defined 
 			LoadParameters::Evaluate_Definitions::Evaluate_were_defined($parameterKey,$parameterValue);
+			}elsif ($parameterKey =~ /(^cex_labels$)/) {
+			LoadParameters::Evaluate_Definitions::Evaluate_value($parameterKey,$parameterValue);
 			}elsif ($parameterKey =~ /(^classes_type$)/) {
 			LoadParameters::Evaluate_Definitions::Evaluate_value($parameterKey,$parameterValue);
 			}elsif ($parameterKey =~ /(^cutoff_neg$)/) {
@@ -112,64 +114,18 @@ my($In_hashParametersTolookFor,$In_arrayInputtedOneLineCommands) = @_;
 			LoadParameters::Evaluate_Definitions::Evaluate_value($parameterKey,$parameterValue);
 			}elsif ($parameterKey =~ /(^cutoff_print_q$)/) {
 			LoadParameters::Evaluate_Definitions::Evaluate_value($parameterKey,$parameterValue);
+			}elsif ($parameterKey =~ /(^lwd$)/) {
+			LoadParameters::Evaluate_Definitions::Evaluate_value($parameterKey,$parameterValue);
 			}elsif ($parameterKey =~ /(^nperm$)/) {
 			LoadParameters::Evaluate_Definitions::Evaluate_value($parameterKey,$parameterValue);
-			}elsif ($parameterKey =~ /(^numb_cols$)/) {
-			LoadParameters::Evaluate_Definitions::Evaluate_numb_cols($parameterKey,$parameterValue);
 			}elsif ($parameterKey =~ /(^p_correction_test$)/) {
 			LoadParameters::Evaluate_Definitions::Evaluate_value($parameterKey,$parameterValue);
 			}elsif ($parameterKey =~ /(^path_outfiles$)/) {
 			### these are parameters which only need specified path/directories do exist
 			$hashParameters{$parameterKey} =~ s/\/$//;
 			LoadParameters::Evaluate_Definitions::Evaluate_directory_exist($parameterKey,$parameterValue);
-			}elsif ($parameterKey =~ /(^restrict_classes$)/) {
-			LoadParameters::Evaluate_Definitions::Evaluate_restrict_classes($parameterKey,$parameterValue);
-			}elsif ($parameterKey =~ /(^set_max$)/) {
-			### these are parameters whose values format needs to be checked and make sure Min <= Max value
+			}elsif ($parameterKey =~ /(^print_plot_ticks_labels_legend$)/) {
 			LoadParameters::Evaluate_Definitions::Evaluate_value($parameterKey,$parameterValue);
-				if ($parameterKey =~ /(^set_min$)/) {
-					if ($hashParameters{set_max}) {
-					$parameterKey_set_max = "set_max";
-					$parameterValue_set_max = $hashParameters{set_max};
-					LoadParameters::Evaluate_Definitions::Evaluate_value($parameterKey_set_max,$parameterValue_set_max);
-						unless ($parameterValue <= $parameterValue_set_max) {
-						die "ERROR!!! unexpected comparison '$parameterKey' = '$parameterValue' and '$parameterKey_set_max' = '$parameterValue_set_max', but they are expected '$parameterKey' <= '$parameterKey_set_max'\n";
-						}
-					}
-				}elsif ($parameterKey =~ /(^set_max$)/) {
-					if ($hashParameters{set_min}) {
-					$parameterKey_set_min = "set_min";
-					$parameterValue_set_min = $hashParameters{set_min};
-					LoadParameters::Evaluate_Definitions::Evaluate_value($parameterKey_set_min,$parameterValue_set_min);
-						unless ($parameterValue >= $parameterValue_set_min) {
-						die "ERROR!!! unexpected comparison '$parameterKey' = '$parameterValue' and '$parameterKey_set_min' = '$parameterValue_set_min', but they are expected '$parameterKey' >= '$parameterKey_set_min'\n";
-						}
-					}
-				}
-
-			}elsif ($parameterKey =~ /(^set_min$)/) {
-			### these are parameters whose values format needs to be checked and make sure Min <= Max value
-			LoadParameters::Evaluate_Definitions::Evaluate_value($parameterKey,$parameterValue);
-				if ($parameterKey =~ /(^set_min$)/) {
-					if ($hashParameters{set_max}) {
-					$parameterKey_set_max = "set_max";
-					$parameterValue_set_max = $hashParameters{set_max};
-					LoadParameters::Evaluate_Definitions::Evaluate_value($parameterKey_set_max,$parameterValue_set_max);
-						unless ($parameterValue <= $parameterValue_set_max) {
-						die "ERROR!!! unexpected comparison '$parameterKey' = '$parameterValue' and '$parameterKey_set_max' = '$parameterValue_set_max', but they are expected '$parameterKey' <= '$parameterKey_set_max'\n";
-						}
-					}
-				}elsif ($parameterKey =~ /(^set_max$)/) {
-					if ($hashParameters{set_min}) {
-					$parameterKey_set_min = "set_min";
-					$parameterValue_set_min = $hashParameters{set_min};
-					LoadParameters::Evaluate_Definitions::Evaluate_value($parameterKey_set_min,$parameterValue_set_min);
-						unless ($parameterValue >= $parameterValue_set_min) {
-						die "ERROR!!! unexpected comparison '$parameterKey' = '$parameterValue' and '$parameterKey_set_min' = '$parameterValue_set_min', but they are expected '$parameterKey' >= '$parameterKey_set_min'\n";
-						}
-					}
-				}
-
 			}elsif ($parameterKey =~ /(^use_graphics_device$)/) {
 			LoadParameters::Evaluate_Definitions::Evaluate_value($parameterKey,$parameterValue);
 			}elsif ($parameterKey =~ /(^use_ora$)/) {
