@@ -1,6 +1,10 @@
 #!/usr/bin/perl
 
 ########################
+### See documentation below, in section 'START INSTRUCTIONS TO RUN THIS PROGRAM'
+########################
+
+########################
 ### EXTERNAL DEPENDENCIES
 ########################
 ### (1)
@@ -115,40 +119,18 @@ $CommentsForHelp =~ s/(\n####)|(\n###)|(\n##)|(\n#)/\n/g;
 &Readme;
 &Parameters;
 
-$CibersortExecutable =~ s/~\//\/$Users_home\/$DefaultUserName\//;
+$outdir = "$hashParameters{path_outfiles}/CIBERSORT";
+system "mkdir -p $outdir";
 
-unless (-f $CibersortExecutable) {
-die "\n\nERROR!!! Couldn't find CIBERSORT.jar executable at '$CibersortExecutable'\n"
-}
 
 ############################
-#### Step 1 -- Check that R(Rserve) is active
+#### Step 2 -- Check that dependencies are available
 ############################
 
-print "Checking that R(Rserve) is active\n";
-
-@Rserve = split ("\n", `ps ax | grep Rserve`);
-
-$FoundRserveActive = 0;
-foreach $rs (@Rserve) {
-	if ($rs =~ /(\s*\d+\s+\?+\s+Ss\s+\d+:\d+)(\.\d+)*(\s+\S+)(Rserve)/) {
-	$FoundRserveActive = 1;
-	}
-}
-if ($FoundRserveActive == 1) {
-print "OK - found Rserve active\n\n";
-}else{
-die "\n\nERROR!!! couldn't find R library(Rserve) active.
-To activate it, in an R console type:
-install.package(\"Rserve\") ### only needed once
-library(Rserve)
-Rserve(args=\"--no-save\")\n
-Check CIBERSORT's file CIBERSORT_documentation.txt for help\n\n";
-}
-	
+&CheckThatDependenciesAreAvailable();
 
 ############################
-#### Step 2 -- Getting original column headers to put them back in Cibersort's output
+#### Step 3 -- Getting original column headers to put them back in Cibersort's output
 ############################
 @ColHeaders = split ("\t", `head -n 1 $hashParameters{infile_matrix}`);
 
@@ -162,7 +144,7 @@ $NumberOfColHeaders++;
 }
 
 ############################
-#### Step 3 -- Check format of -infile_classes
+#### Step 4 -- Check format of -infile_classes
 ############################
 
 if ($hashParameters{classes_type} =~ /^gmt$/i) {
@@ -173,11 +155,8 @@ $ClassesFileForCibersort = "$hashParameters{infile_classes}";
 }
 
 ############################
-#### Step 4 -- Sending to CIBERSORT
+#### Step 5 -- Sending to CIBERSORT
 ############################
-
-$outdir = "$hashParameters{path_outfiles}/CIBERSORT";
-system "mkdir -p $outdir";
 
 print "Performing CIBERSORT\n";
 
@@ -194,7 +173,7 @@ system "date +%Y_%m_%d_%H_%M_%S";
 ($year_cibersort2,$month_cibersort2,$day_cibersort2,$hour_cibersort2,$minute_cibersort2,$second_cibersort2) = split ("_", `date +%Y_%m_%d_%H_%M_%S`);
 
 ############################
-#### Step 5 -- Reformat outfile headers
+#### Step 6 -- Reformat outfile headers
 ############################
 
 open  OUTTMP, "<$outdir/$hashParameters{prefix_outfiles}.CIBERSORT.tmp"                   or die "Couldn't open '$outdir/$hashParameters{prefix_outfiles}.CIBERSORT.tmp'\n";
@@ -260,22 +239,28 @@ $c = 0;
 close OUTES;
 
 ############################
-#### Step 6 -- Generating log file with parameters used in the run
+#### Step 7 -- Generating log file with parameters used in the run
 ####           NOTE: this step must be run before getting gene-level networks
 ############################
 
 &PrintParameters;
 
 ############################
-#### Step 7 -- Remove temporary files
+#### Step 8 -- Remove temporary files
 ############################
 
 print "Removing temporary files\n";
 
 `rm $outdir/$hashParameters{prefix_outfiles}.CIBERSORT.tmp`;
 
+### Comment this if you want to keep the binary profile produced from the -infile_classes *gmt file
+if ($hashParameters{classes_type} =~ /^gmt$/i) {
+`rm $hashParameters{path_outfiles}/$outfileWOpath_classes.1_0.tsv`;
+}
+
+
 ############################
-#### Step 8 -- Report run time
+#### Step 9 -- Report run time
 ############################
 
 ### This will be used to get overall computing time
@@ -311,7 +296,7 @@ cibersort\t$all_cibersort_seconds\tsecs
 overall\t$all_overall_seconds\tsecs\n";
 
 ############################
-#### Step 9 -- Finishing program
+#### Step 10 -- Finishing program
 ############################
 
 print "\n  Done!!!\n\nCIBERSORT conducted for:\n'$hashParameters{infile_matrix}'\nvs.\n'$hashParameters{infile_classes}'\n\nCheck directory:\n$outdir\n\n";
@@ -455,4 +440,118 @@ print OUTFILE_BIN "\n";
 close OUTFILE_BIN;
 
 }
+##<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+sub CheckThatDependenciesAreAvailable {
+
+### Checking that java v1.8 or v1.9 is available
+
+print "Checking that java v1.8 or v1.9 is available\n";
+
+	sub GetJavaVersion {
+	$java_version = "";
+	`java -version 2> $hashParameters{path_outfiles}/java_check.txt`;
+	$java_version = `sed -n 1p $hashParameters{path_outfiles}/java_check.txt`;
+	chomp $java_version;
+	sleep 1;
+	return $java_version;
+	}
+
+
+&GetJavaVersion();
+if ($java_version =~ /(java|openjdk)\s+version \"1\.[8|9]/) {
+print "\tOK - found $java_version\n";
+}else{
+`module load java`;
+sleep 5;
+&GetJavaVersion();
+
+	if ($java_version =~ /(java|openjdk)\s+version\s+\"1\.[8|9]/) {
+	print "\tOK - found $java_version\n";
+	}else{
+	die "\n\nERROR!!! Couldn't find java (v1.8* or 1.9*) available\n"
+	}
+
+}
+
+### Checking that gcc v7 or v8 is available
+
+print "Checking that gcc is available\n";
+
+	sub CheckGcc {
+	$gcc_available = "";
+	$gcc_available = `which gcc`;
+	chomp $gcc_available;
+	return $gcc_available
+	}
+
+&CheckGcc();
+if ($gcc_available =~ /(^\S+\/gcc$)|(alias.+\n\s*\S+\/gcc$)/) {
+print "\tOK - found $gcc_available\n";
+}else{
+`module load gcc`;
+&CheckGcc();
+	if ($gcc_available =~ /(^\S+\/gcc$)|(alias.+\n\s*\S+\/gcc$)/) {
+	print "\tOK - found $gcc_available\n";
+	}else{
+	die "\n\nERROR!!! Couldn't find gcc available\n"
+	}
+
+}
+
+### Checking that Cibersort is available
+
+$CibersortExecutable =~ s/~\//\/$Users_home\/$DefaultUserName\//;
+
+print "Checking that Cibersort is available\n";
+
+if (-f $CibersortExecutable) {
+print "\tOK - found $CibersortExecutable\n";
+}else{
+die "\n\nERROR!!! Couldn't find CIBERSORT.jar executable at '$CibersortExecutable'\n"
+}
+
+
+### Checking that R library(Rserve) is active
+
+print "Checking that R library(Rserve) is active\n";
+
+	sub CheckRserve {
+	$FoundRserveActive = 0;
+	@Rserve = split ("\n", `ps ax | grep Rserve`);
+		foreach $rs (@Rserve) {
+			if ($rs =~ /(\s*\d+\s+\?+\s+Ss\s+\d+:\d+)(\.\d+)*(\s+\S+)(Rserve)/) {
+			$FoundRserveActive++;
+			}
+		}
+	}
+
+&CheckRserve();
+if ($FoundRserveActive > 0) {
+print "\tOK - found R library(Rserve) active\n\n";
+}else{
+print "Trying to activate R library(Rserve)\n\n";
+
+### Note 'R' must be available
+### In some systems like SciNet (Compute Canada) gcc must be available for R to run
+
+$FileForStartRserve = "$outdir/ins_start_rserve.R";
+open INS_START_RSERVE, ">$FileForStartRserve" or die "Can't open '$FileForStartRserve'\n\n";
+print INS_START_RSERVE "library(Rserve)\nRserve(args=\"--no-save\")\nq()";
+close INS_START_RSERVE;
+
+$CommadToStartRserve = "R --no-save < $FileForStartRserve";
+
+system "$CommadToStartRserve";
+	
+	&CheckRserve();
+	if ($FoundRserveActive > 0) {
+	print "\tOK - found R library(Rserve) active\n\n";
+	}else{
+	die "\n\nERROR!!! Couldn't make R library(Rserve) active\n";
+	}
+}
+
+}	
 ##<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
