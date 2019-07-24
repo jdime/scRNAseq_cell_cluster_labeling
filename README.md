@@ -2,7 +2,7 @@
 
 Description
 ================
-This repository contains scripts to run and benchmark scRNA-seq cell cluster labeling methods and is a companion to our paper 'Evaluation of methods to assign cell type labels to cell clusters from single-cell RNA-sequencing data' (Diaz-Mejia JJ et al (2019) [Preprint at F1000Research https://f1000research.com/articles/8-296/v1].
+This repository contains scripts to run and benchmark scRNA-seq cell cluster labeling methods and is a companion to our paper 'Evaluation of methods to assign cell type labels to cell clusters from single-cell RNA-sequencing data' (Diaz-Mejia JJ et al (2019) [Preprint at F1000Research https://doi.org/10.12688/f1000research.18490.1].
 
 
 Scripts
@@ -18,10 +18,11 @@ Scripts
 ---
 | Script name |  Task(s) |
 | -------------------------------------------------------------- |  ------------------------------------------------ |
-| `obtains_CIBERSORT_for_MatrixColumns.pl`                       | Runs CIBERSORT using gene expression signatures and a matrix with average gene expressions per gene, per cell cluster) |
-| `obtains_GSEA_for_MatrixColumns.pl`                            | Runs GSEA using gene expression signatures and a matrix with average gene expressions per cell cluster) |
-| `obtains_GSVA_for_MatrixColumns.R`                             | Runs GSVA using gene expression signatures and a matrix with average gene expressions per cell cluster) |
-| `obtains_ORA_for_MatrixColumns.pl`                             | Runs ORA using gene expression signatures and a matrix with average gene expressions per cell cluster) |
+| `obtains_CIBERSORT_for_MatrixColumns.pl`                       | Runs CIBERSORT using gene expression signatures and a matrix with average gene expressions per gene, per cell cluster  |
+| `obtains_GSEA_for_MatrixColumns.pl`                            | Runs GSEA using gene expression signatures and a matrix with average gene expressions per cell cluster                   |
+| `obtains_GSVA_for_MatrixColumns.R`                             | Runs GSVA using gene expression signatures and a matrix with average gene expressions per cell cluster                   |
+| `obtains_METANEIGHBOR_for_MatrixColumns.R`                     | Runs MetaNeighborUS using gene expression signatures, a matrix with average gene expressions per cell cluster, and reference cell types. Note: modifications were made to the R library(metaneighbor) source code. Check `bin/r_programs/obtains_METANEIGHBOR_for_MatrixColumns.R` for details |
+| `obtains_ORA_for_MatrixColumns.pl`                             | Runs ORA using gene expression signatures and a matrix with average gene expressions per cell cluster |
 
 **Scripts to run ROC and PR curve analyses**
 ---
@@ -87,9 +88,10 @@ https://doi.org/10.5281/zenodo.2575050
 
 Archived code at time of publication
 ================
-http://doi.org/10.5281/zenodo.2583161
-    
-    
+Version 1.0 http://doi.org/10.5281/zenodo.2583161  <br />
+Version 2.0 http://doi.org/10.5281/zenodo.3350461
+
+
 Issues and feature requests
 ================
 Please use this repository templates available at:<br />
