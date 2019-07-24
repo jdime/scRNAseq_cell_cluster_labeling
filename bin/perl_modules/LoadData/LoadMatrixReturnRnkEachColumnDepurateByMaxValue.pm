@@ -38,7 +38,7 @@ require Exporter;
 require AutoLoader;
 
 use ReformatNumbers::NAvalues;
-use ReformatPerlEntities::ChangeCharactersByLowDash;
+use ReformatPerlEntities::ChangeCharactersByRequestedCharacter;
 
 @ISA = qw( Exporter AutoLoader );
 @EXPORT = qw( LoadMatrixReturnRnkEachColumn %hashAllRowNames %hashAllColumnNames %hashRowsNames %hashColumnsNames $NumberOfRowHeaders $NumberOfColumnHeaders %hashAllReplicatesLoaded %hashCountScoresPassingCutoffsWONas $ChangedColNames $outfileOriginalColNames );
@@ -112,7 +112,7 @@ $r++;
 		
 		$NumberOfColumnHeaders++;
 		$OriginalColName = $colname;
-		$colname = &ReformatPerlEntities::ChangeCharactersByLowDash::ChangeCharactersByLowDash($colname);
+		$colname = &ReformatPerlEntities::ChangeCharactersByRequestedCharacter::ChangeCharactersByRequestedCharacter($colname,"_","y");
 			if ($hashAllColumnNames{$colname}) {
 			die "\nERROR!!! column header '$colname' appears more than once. Duplicted headers are not allowed\n";
 			}else{

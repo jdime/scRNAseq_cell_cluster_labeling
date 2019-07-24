@@ -20,7 +20,7 @@ package LoadData::LoadClasses;
 require Exporter;
 require AutoLoader;
 
-use ReformatPerlEntities::ChangeCharactersByLowDash;
+use ReformatPerlEntities::ChangeCharactersByRequestedCharacter;
 
 @ISA = qw( Exporter AutoLoader );
 @EXPORT = qw(
@@ -45,27 +45,28 @@ $count_genes_tested_from_gene_list_and_classes
 ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 sub LoadClasses {
 
-my($infile_classes,$restrict_classes,$set_min,$set_max,$infile_tested_genes,$column_tested_genes,$includes_class_id_and_name_YN) = @_;
+my($infile_classes,$restrict_classes,$set_min,$set_max,$infile_tested_genes,$column_tested_genes,$includes_class_id_and_name_YN,$outfile_filtered_classes) = @_;
 
-unless ($infile_classes =~ /\S/ && $restrict_classes =~ /\S/ && $set_min =~ /^\d+$/ && $set_max =~ /^\d+$/ && $infile_tested_genes =~ /\S/ && $column_tested_genes =~ /\S/ && $includes_class_id_and_name_YN =~ /^(yes|no)$/i) {
+unless ($infile_classes =~ /\S/ && $restrict_classes =~ /\S/ && $set_min =~ /^\d+$/ && $set_max =~ /^\d+$/ && $infile_tested_genes =~ /\S/ && $column_tested_genes =~ /\S/ && $includes_class_id_and_name_YN =~ /^(yes|no)$/i && $outfile_filtered_classes =~ /\S/) {
 die "Unexpected format in options for LoadData::LoadClasses:
-infile_classes      = '$infile_classes'
-restrict_classes    = '$restrict_classes'
-set_min             = '$set_min'
-set_max             = '$set_max'
-infile_tested_genes = '$infile_tested_genes'
-column_tested_genes = '$column_tested_genes'
-include_class_name  = '$includes_class_id_and_name_YN'\n";
+infile_classes           = '$infile_classes'
+restrict_classes         = '$restrict_classes'
+set_min                  = '$set_min'
+set_max                  = '$set_max'
+infile_tested_genes      = '$infile_tested_genes'
+column_tested_genes      = '$column_tested_genes'
+include_class_name       = '$includes_class_id_and_name_YN'
+outfile_filtered_classes = '$outfile_filtered_classes'\n";
 }
 
 &LoadRestrictGenes($infile_tested_genes,$column_tested_genes);
 &LoadRestrictClasses($restrict_classes);
 
 print "Loading Classes from \"$infile_classes\"\n";
-open CLASSES,    "<$infile_classes"              or die "Can't open '$infile_classes' (-infile_classes)\n";
-open CLASSESOUT, ">$infile_classes.Filtered.gmt" or die "Can't open '$infile_classes.Filtered.gmt' (outfile_classes filtered by population) \n";
+open CLASSES,    "<$infile_classes"           or die "Can't open '$infile_classes' (-infile_classes)\n";
+open CLASSESOUT, ">$outfile_filtered_classes" or die "Can't open '$outfile_filtered_classes' (outfile_classes filtered by population) \n";
 
-$ReformattedClasses = "$infile_classes.Filtered.gmt";
+$ReformattedClasses = "$outfile_filtered_classes";
 
 $classnumber = 0;
 $ClassesLoaded = 0;
@@ -116,10 +117,10 @@ chomp $line;
 			$ClassesLoaded++;
 
 			$classname =~ s/(<\/*SUP>|<\/*I>)/_/g;
-			$classname = ReformatPerlEntities::ChangeCharactersByLowDash::ChangeCharactersByLowDash($classname);
+			$classname = ReformatPerlEntities::ChangeCharactersByRequestedCharacter::ChangeCharactersByRequestedCharacter($classname,"_","y");
 
 			$classid =~ s/(<\/*SUP>|<\/*I>)/_/g;
-			$classid = ReformatPerlEntities::ChangeCharactersByLowDash::ChangeCharactersByLowDash($classid);
+			$classid = ReformatPerlEntities::ChangeCharactersByRequestedCharacter::ChangeCharactersByRequestedCharacter($classid,"_","y");
 			
 			$classname =~ tr/[a-z]/[A-Z]/;
 			$classid =~ tr/[a-z]/[A-Z]/;
