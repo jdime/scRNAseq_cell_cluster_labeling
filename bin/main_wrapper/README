@@ -22,12 +22,16 @@
 ###
 ### Notes:
 ###        Note 1
-###        In the case of CIBERSORT, two forms of cell type signature infiles can be provided:
+###        In the case of CIBERSORT and METANEIGHBOR, two forms of cell type signature infiles can be provided:
 ###        - in the form of gene sets (2a) or in the form of gene expression profiles (2b)
 ###        - Subsampling genes from is always conducted using 2a type files, which can be propagated to 2b type files using script:
 ###          'propagates_permuted_gmt_files_to_profile.R'
 ###
 ###        Note 2
+###        In the case of METANEIGHBOR, a fourth infile is needed for the method to calculate its own ROC AUC
+###        - In Diaz-Mejia et al. (2019) this file was the same as infile (3)
+###
+###        Note 3
 ###        To add new methods to evaluate you can:
 ###        a) add the path to the executable in 'Dependencies:'
 ###        b) provide inputs and parameters adding commands indicated by 'Runs NEW_METHOD and gather its outputs'
@@ -61,6 +65,7 @@
 ### ~/bin/obtains_CIBERSORT_for_MatrixColumns.pl
 ### ~/bin/obtains_GSEA_for_MatrixColumns.pl
 ### ~/r_programs/obtains_GSVA_for_MatrixColumns.R
+### ~/r_programs/obtains_METANEIGHBOR_for_MatrixColumns.R
 ### ~/bin/obtains_ORA_for_MatrixColumns.pl
 ### ~/bin/obtains_performance_plots_from_cluster_labelings.pl
 ####################################
