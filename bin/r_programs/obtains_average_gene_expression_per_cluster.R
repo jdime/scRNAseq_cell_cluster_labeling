@@ -1,11 +1,23 @@
 ####################################
-### Script 'obtains_average_gene_expression_per_cluster.R' computes the average gene expression for each gene of --input, for each cluster of --input_clusters
-### --input can be either matrix market format files (barcodes.tsv, genes.tsv and matrix.mtx), or a sparse matrix with genes (rows) and cell IDs (columns)
+### Script 'obtains_average_gene_expression_per_cluster.R' computes the average gene expression
+### for each gene of --input, for each cluster of --input_clusters.
+###
+### --input can be either matrix market format files (barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz),
+### or a sparse matrix with genes (rows) and cell IDs (columns)
+###
 ### --input_clusters must be a <tab> delimited paired table with cell IDs and cluster IDs
 ###
 ### Will return a matrix with the average gene expression of each gene (rows) for each cell cluster (columns)
 ### 
 ### Follows this procedure, using the use.raw=T space https://satijalab.org/seurat/interaction_vignette.html
+###
+### NEW IMPLEMENTATIONS SINCE Seurat v2:
+### 1) Rewritten with Seurat v3 commands (including ability to read output from Cell Ranger v3)
+###    Main differences vs. Seurat v2 include:
+###    a) new function names
+###    b) since Cell Ranger v3 allows now to have multiple features (not only genes),
+###       in general all references to 'genes' in v2 are now called 'features'
+###
 ####################################
 ### Questions/comments to Javier Diaz - javier.diazmejia@gmail.com
 ####################################
@@ -23,6 +35,7 @@
 suppressPackageStartupMessages(library(Seurat))       # to run QC, differential gene expression and clustering analyses
 suppressPackageStartupMessages(library(dplyr))        # needed by Seurat for data manupulation
 suppressPackageStartupMessages(library(optparse))     # (CRAN) to handle one-line-commands
+suppressPackageStartupMessages(library(data.table))   # to read tables quicker than read.table - only needed is using '-t DGE'
 ####################################
 
 ####################################
@@ -61,20 +74,25 @@ options( warn = -1 )
 #
 option_list <- list(
   make_option(c("-i", "--input"), default="NA",
-              help="Either the path/name to a 10X *directory* with barcodes.tsv, genes.tsv and matrix.mtx files;
-              or path/name of a <tab> delimited digital gene expression (DGE) *file* with genes in rows vs. barcodes in columns"),
+              help="Either the path/name to a MTX *directory* with barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz files;
+                or path/name of a <tab> delimited digital gene expression (DGE) *file* with genes in rows vs. barcodes in columns
+                Notes:
+                The 'MTX' files can be for example the output from Cell Ranger 'count' v2 or v3: `/path_to/outs/filtered_feature_bc_matrix/`
+                Cell Ranger v2 produces unzipped files and there is a genes.tsv instead of features.tsv.gz
+                Default = 'No default. It's mandatory to specify this parameter'"),
   #
   make_option(c("-t", "--input_type"), default="NA",
-              help="Indicates if input is either a '10X' directory or a 'DGE' file"),
+              help="Indicates if input is either a 'MTX' directory or a 'DGE' file
+              Default = 'No default. It's mandatory to specify this parameter'"),
   #
   make_option(c("-c", "--input_clusters"), default="NA",
               help="A path/name to a <tab> delimited file, with one or more cluster labeling columns, in format like:
-              Barcode            cluster_labels_1   cluster_labels_1 ... etc
-              AAACCTGGTATTACCG   0                  0
-              AAACCTGTCGGCATCG   1                  1
-              AAACCTGTCTCCAACC   1                  2
-              AAACCTGTCTTCGAGA   2                  3
-              ... etc"),
+                Barcode            cluster_labels_1   cluster_labels_1 ... etc
+                AAACCTGGTATTACCG   0                  0
+                AAACCTGTCGGCATCG   1                  1
+                AAACCTGTCTCCAACC   1                  2
+                AAACCTGTCTTCGAGA   2                  3
+                ... etc"),
   #
   make_option(c("-o", "--outdir"), default="NA",
               help="A path/name for the results directory"),
@@ -94,15 +112,19 @@ PrefixOutfiles <- opt$prefix_outfiles
 Tempdir        <- "~/temp" ## Using this for temporary storage of outfiles because sometimes long paths of outdirectories casuse R to leave outfiles unfinished
 
 ####################################
-### Define tailored parameters
+### Define default parameters
 ####################################
-### Some of these parameters are the defaults provided by Seurat developers, others are tailored according to clusters/t-SNE granularity
-###
-### Parameters for Seurat filters
-MinCells<-3
-MinGenes<-200
 
-StartTimeOverall<-Sys.time()
+DefaultParameters <- list(
+  MinCells = 3,
+  MinGenes = 200
+)
+
+####################################
+### Start stopwatch
+####################################
+
+StartTimeOverall <-Sys.time()
 
 ####################################
 ### Check that mandatory parameters are not 'NA' (default)
@@ -136,13 +158,12 @@ dir.create(file.path(Tempdir), showWarnings = F, recursive = T)
 ####################################
 writeLines("\n*** Load scRNA-seq data ***\n")
 
-if(regexpr("^10X$", InputType, ignore.case = T)[1] == 1) {
-  print("Loading 10X infiles")
+if (regexpr("^MTX$", InputType, ignore.case = T)[1] == 1) {
+  print("Loading MTX infiles")
   input.matrix <- Read10X(data.dir = Input)
 }else if (regexpr("^DGE$", InputType, ignore.case = T)[1] == 1) {
   print("Loading Digital Gene Expression matrix")
-  library(data.table)
-  input.matrix <- data.frame(fread(Input, sep = "\t"),row.names=1)
+  input.matrix <- data.frame(fread(Input),row.names=1)
 }else{
   stop(paste("Unexpected type of input: ", InputType, "\n\nFor help type:\n\nRscript Runs_Seurat_Clustering.R -h\n\n", sep=""))
 }
@@ -153,7 +174,7 @@ dim(input.matrix)
 ####################################
 writeLines("\n*** Create a Seurat object ***\n")
 
-seurat.object  <- CreateSeuratObject(raw.data = input.matrix, min.cells = MinCells, min.genes = MinGenes, project = PrefixOutfiles)
+seurat.object  <- CreateSeuratObject(counts = input.matrix, min.cells = DefaultParameters$MinCells, min.features = DefaultParameters$MinGenes, project = PrefixOutfiles)
 seurat.object
 
 ####################################
@@ -177,18 +198,19 @@ for (cluste_type in colnames(CellClusters)) {
   print(paste("Getting expression averages for: ", cluste_type, sep=""))
   
   # switch the identity class of all cells to reflect "clusters"
-  seurat.object <- SetAllIdent(object = seurat.object, id = cluste_type)
-  
+  Idents(object = seurat.object) <- cluste_type
+
   ####################################
   ### Get average expression for each cluster for each gene
   ####################################
-  cluster.averages<-AverageExpression(object = seurat.object, use.raw = T)
+  cluster.averages<-AverageExpression(object = seurat.object, use.counts = T)
+
   OutfileClusterAverages<-paste(Tempdir,"/",PrefixOutfiles,".SEURAT_AverageGeneExpressionPerCluster_", cluste_type, ".tsv", sep="")
   
   if ((grepl(pattern = "^[0-9]+$", x = names(cluster.averages)[[1]])) == TRUE) {
-    Headers<-paste("AVERAGE_GENE_EXPRESSION",paste("C", names(cluster.averages), sep="",collapse="\t"),sep="\t",collapse = "\t")
+    Headers<-paste("AVERAGE_GENE_EXPRESSION",paste("C", names(cluster.averages[["RNA"]]), sep="",collapse="\t"),sep="\t",collapse = "\t")
   }else{
-    Headers<-paste("AVERAGE_GENE_EXPRESSION",paste(names(cluster.averages),sep="",collapse="\t"),sep="\t",collapse = "\t")
+    Headers<-paste("AVERAGE_GENE_EXPRESSION",paste(names(cluster.averages[["RNA"]]),sep="",collapse="\t"),sep="\t",collapse = "\t")
   }
   write.table(Headers,file = OutfileClusterAverages, row.names = F, col.names = F, sep="\t", quote = F)
   write.table(data.frame(cluster.averages),file = OutfileClusterAverages, row.names = T, col.names = F, sep="\t", quote = F, append = T)
