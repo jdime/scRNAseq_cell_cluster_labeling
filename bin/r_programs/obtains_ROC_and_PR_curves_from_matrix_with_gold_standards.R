@@ -39,34 +39,67 @@ options( warn = -1 )
 option_list <- list(
   make_option(c("-i", "--infile_mat"), default="NA",
               help="A path/name to a <tab> delimited *file* with two or more columns with predictions values
-              and another with binary labels ('1' for positive, '0' for negative gold standards):
-              ID_row   Label  Prediction1  Prediction2
-              row_1    1      0.612        0.612
-              row_2    0      0.364        0.364
-              row_3    1      0.432        0.432
-              row_4    0      0.140        0.140"),
+                and another with binary labels ('1' for positive, '0' for negative gold standards):
+                ID_row   Label  Prediction1  Prediction2
+                row_1    1      0.612        0.612
+                row_2    0      0.364        0.364
+                row_3    1      0.432        0.432
+                row_4    0      0.140        0.140
+                Default = 'No default. It's mandatory to specify this parameter'"),
+
+  make_option(c("-c", "--infile_colours"), default="NA",
+              help="A path/name to a <tab> delimited *file* with HEX colours for each prediction column from --infile_mat, like:
+                Prediction1  #E69F00
+                Prediction2  #009E73
+                Prediction3  #CC79A7
+                ...etc
+                Type 'NA' to use up to 13 default colours, defined by list(ColoursNumbToHex)
+                Default = 'NA'"),
 
   make_option(c("-o", "--outdir"), default="NA",
-              help="A path/name for the results directory"),
+              help="A path/name for the results directory
+                Default = 'No default. It's mandatory to specify this parameter'"),
   
   make_option(c("-p", "--prefix_outfiles"), default="NA",
-              help="A prefix for outfile names, e.g. your project ID"),
+              help="A prefix for outfile names, e.g. your project ID
+                Default = 'No default. It's mandatory to specify this parameter'"),
 
   make_option(c("-l", "--lwd"), default="3",
-              help="The line width, a positive number, defaulting to 3"),
+              help="Indicates the width of plot lines
+                Default = '3'"),
+  
+  make_option(c("-w", "--print_plot_ticks_labels_legend"), default="all",
+              help="Indicates if plots should contain:
+                a) axes labels, tick marks and legends (type 'all')
+                b) only tick marks (type 'ticks')
+                c) only axes labels and tick marks (type 'label_tick')
+                d) only legend (type 'legend')
+                e) no axes labels, tick marks or legends (type 'none')
+                Default = 'all'"),
+  
+  make_option(c("-x", "--cex_labels"), default="1",
+              help="Applies only if using '-w all' or '-w label_tick'
+                Indicates a factor to decrease/increase the size of labels
+                For example, to use a value 1.5 times bigger than normal use '-x 1.5', or to reduce them by half use '-x 0.5'
+                Default = '1'"),
 
   make_option(c("-d", "--graphics_device"), default="pdf",
               help="Indicates if the plots should be either 'pdf' (default) or 'png'
-              or type 'NA' to only generate AUC *.tsv files")
+                or type 'NA' to only generate text files with AUC values
+                Default = 'pdf'")
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))
 
-InfileMat       <- opt$infile_mat
-Outdir          <- opt$outdir
-PrefixOutfiles  <- opt$prefix_outfiles
-Lwd             <- opt$lwd
-GraphicsDevice  <- opt$graphics_device
+InfileMat            <- opt$infile_mat
+InfileColours        <- opt$infile_colours
+Outdir               <- opt$outdir
+PrefixOutfiles       <- opt$prefix_outfiles
+Lwd                  <- opt$lwd
+PrintLabelsAndTicks  <- opt$print_plot_ticks_labels_legend
+CexLabels            <- as.numeric(opt$cex_labels)
+GraphicsDevice       <- opt$graphics_device
+
 Tempdir         <- "~/temp" ## Using this for temporary storage of outfiles because sometimes long paths of outdirectories casuse R to leave outfiles unfinished
 
 StartTimeOverall<-Sys.time()
@@ -125,32 +158,54 @@ if (regexpr("^pdf$", GraphicsDevice, ignore.case = T)[1] == 1) {
 }
 
 ####################################
-### Define colours
-####################################
-writeLines("\n*** Define colours ***\n")
-
-ColoursNumbToHex <- list(
-  "1"  = "#E69F00",
-  "2"  = "#009E73",
-  "3"  = "#CC79A7",
-  "4"  = "#1E90FF",
-  "5"  = "#D55E00",
-  "6"  = "#8B8989",
-  "7"  = "#FFD700",
-  "8"  = "#43CD80",
-  "9"  = "#FFC0CB",
-  "10" = "#56B4E9",
-  "11" = "#8B4789",
-  "12" = "#0072B2",
-  "13" = "#000000"
-)
-
-####################################
 ### Load data, get plots and AUC's
 ####################################
 writeLines("\n*** Load data, get plots and AUC's ***\n")
 
 mat<-read.table(InfileMat, header = T, row.names = 1, sep = "\t")
+
+####################################
+### Define colours
+####################################
+writeLines("\n*** Define colours ***\n")
+
+DatasetLabelToColourHex  = list()
+
+if (regexpr("^NA$", InfileColours, ignore.case = T)[1] == 1) {
+  writeLines("\n*** Using default colours ***\n")
+  
+    ColoursNumbToHex <- list()
+    ColoursNumbToHex <- list(
+    ### The order of line colours in plots will follow the order of colours in list(ColoursNumbToHex)
+    "#E69F00",    ## orange        
+    "#009E73",    ## bluishgreen   
+    "#CC79A7",    ## reddishpurple 
+    "#1E90FF",    ## dodgerblue    
+    "#D55E00",    ## vermillion    
+    "#8B8989",    ## snow4         
+    "#FFD700",    ## yellow        
+    "#43CD80",    ## seagreen3     
+    "#FFC0CB",    ## pink	      	
+    "#56B4E9",    ## skyblue       
+    "#8B4789",    ## orchid4       
+    "#0072B2",    ## blue	      	
+    "#000000"     ## black
+  )
+  
+  for (d in 2:ncol(mat)) {
+    DatasetLabelToColourHex[[colnames(mat)[d]]] <- as.character(ColoursNumbToHex[d-1])
+  }
+  
+}else{
+  writeLines("\n*** Using colours defined by --infile_colours ***\n")
+  
+  colours.mat<-read.table(InfileColours, header = F, row.names = 1, sep = "\t", comment.char = "")
+  colnames(colours.mat)<-c("Colour_HEX")
+  DatasetLabelToColourHex = list()
+  for (d in 1:nrow(colours.mat)) {
+    DatasetLabelToColourHex[[rownames(colours.mat)[d]]] <- as.character(colours.mat[d,"Colour_HEX"][[1]])
+  }
+}
 
 ####################################
 ### Generate plots and get AUC's
@@ -172,6 +227,14 @@ for (i in 2:length(colnames(mat))) {
   print(paste(colnames(mat[1]), " vs. ", colnames(mat[i]), collapse = "", sep = ""))
   predsToPlot<-mat[,i]
   
+  ### Get colour for plot 
+  if ((colheaderPrediction %in% names(DatasetLabelToColourHex)) == TRUE) {
+    AUCs_ROC_cols[i]<-DatasetLabelToColourHex[[colheaderPrediction]]
+    AUCs_PR_cols[i] <-DatasetLabelToColourHex[[colheaderPrediction]]
+  }else{
+    stop(c("ERROR!!! couldn't get colour definition for column header", colheaderPrediction, "\n"))
+  }
+  
   ## Get ROC and PR 'saw-toothed' curve coordinates and AUC values
   curves.r <- evalmod(scores = predsToPlot, labels = labelsToPlot)
   aucs.r   <- auc(curves.r)
@@ -179,11 +242,9 @@ for (i in 2:length(colnames(mat))) {
   AUCs_PR_vals[i]  <-round(aucs.r$aucs[[2]], digits = 2)
   AUCs_ROC_text[i]<-paste(colnames(mat)[[i]], "=", (round(aucs.r$aucs[[1]], digits = 2)), sep = "", collapse = "")
   AUCs_PR_text[i] <-paste(colnames(mat)[[i]], "=", (round(aucs.r$aucs[[2]], digits = 2)), sep = "", collapse = "")
-  AUCs_ROC_cols[i]<-ColoursNumbToHex[i-1][[1]]
-  AUCs_PR_cols[i] <-ColoursNumbToHex[i-1][[1]]
   ### This forces lty to start from 2, because lty=1 is a solid line,
   ### which doesn't allow to see overlapping lines
-  LineTypes[i] <- as.integer(i / length(ColoursNumbToHex)) + 2
+  LineTypes[i] <- as.integer((i - 2) / length(names(DatasetLabelToColourHex))) + 2
   
   ## Get PR 'interpolated' curve coordinates
   pred <- prediction(predsToPlot,labelsToPlot)
@@ -200,48 +261,93 @@ for (i in 2:length(colnames(mat))) {
     ## Plot ROC curves
     dev.set(2)
     if (i == 2) {
-      plot(x=curves.r$rocs[[1]]$x, y=curves.r$rocs[[1]]$y, cex.lab=1.4, cex.axis=1.4, lwd=Lwd, col=AUCs_ROC_cols[i][[1]], lty=LineTypes[i][[1]], type="l", xlim=c(0,1), ylim=c(0,1), xlab="False positive rate", ylab = "Sensitivity")
+      plot(x=curves.r$rocs[[1]]$x, y=curves.r$rocs[[1]]$y, lwd=Lwd, col=AUCs_ROC_cols[i][[1]], lty=LineTypes[i][[1]], type="l", xlim=c(0,1), ylim=c(0,1), xaxt='n', yaxt='n', xlab = "", ylab = "")
+      
+      if (grepl(pattern = "all|label_tick", ignore.case = T, x = PrintLabelsAndTicks) == T) {
+        mtext(text = "1 - Specificity", side=1, line = 3.8, cex=CexLabels)
+        mtext(text = "Recall",          side=2, line = 2.2, cex=CexLabels)
+        axis(side = 1, at=c(0,0.5,1), labels = c(0,"",1), par(cex=CexLabels), mgp=c(3,2,0))
+        axis(side = 2, at=c(0,0.5,1), labels = c(0,"",1), par(cex=CexLabels))
+        par(cex=1)
+      }else if (grepl(pattern = "ticks", ignore.case = T, x = PrintLabelsAndTicks) == T) {
+        axis(side = 1, at=c(0,0.5,1), labels = FALSE)
+        axis(side = 2, at=c(0,0.5,1), labels = FALSE)
+      }
+
+      ### Guide line
       par(new=T)
-      plot(c(1:0), c(1:0), lty=2, col="gray60", lwd=1, type="l", axes=FALSE, bty="n", xlab="", ylab="", main="")
+      plot(c(1:0), c(1:0), lty=1, col="gray60", lwd=1, type="l", axes=FALSE, bty="n", xlab="", ylab="", main="")
+      
     }else{
   		par(new=T)
-      plot(x=curves.r$rocs[[1]]$x, y=curves.r$rocs[[1]]$y, cex.lab=1.4, cex.axis=1.4, lwd=Lwd, col=AUCs_ROC_cols[i][[1]], lty=LineTypes[i][[1]], type="l", xlim=c(0,1), ylim=c(0,1), axes=FALSE,bty="n",xlab="",ylab="",main="")
+      plot(x=curves.r$rocs[[1]]$x, y=curves.r$rocs[[1]]$y, lwd=Lwd, col=AUCs_ROC_cols[i][[1]], lty=LineTypes[i][[1]], type="l", xlim=c(0,1), ylim=c(0,1), axes=FALSE,bty="n",xlab="",ylab="",main="")
     }
 
     ## Plot PR 'saw-toothed' curves
     dev.set(3)
     if (i == 2) {
-      plot(x=curves.r$prcs[[1]]$x, y=curves.r$prcs[[1]]$y, cex.lab=1.4, cex.axis=1.4, lwd=Lwd, col=AUCs_PR_cols[i][[1]], lty=LineTypes[i][[1]], type="l", xlim=c(0,1), ylim=c(0,1), xlab = "Recall", ylab = "Precision")
-      abline(h=0.5, lty=2, col="gray60", lwd=1)
+      plot(x=curves.r$prcs[[1]]$x, y=curves.r$prcs[[1]]$y, lwd=Lwd, col=AUCs_PR_cols[i][[1]], lty=LineTypes[i][[1]], type="l", xlim=c(0,1), ylim=c(0,1), xaxt='n', yaxt='n', xlab = "", ylab = "")
+      
+      if (grepl(pattern = "all|label_tick", ignore.case = T, x = PrintLabelsAndTicks) == T) {
+        mtext(text = "Recall",    side=1, line = 3.8, cex=CexLabels)
+        mtext(text = "Precision", side=2, line = 2.2, cex=CexLabels)
+        axis(side = 1, at=c(0,0.5,1), labels = c(0,"",1), par(cex=CexLabels), mgp=c(3,2,0))
+        axis(side = 2, at=c(0,0.5,1), labels = c(0,"",1), par(cex=CexLabels))
+        par(cex=1)
+      }else if (grepl(pattern = "ticks", ignore.case = T, x = PrintLabelsAndTicks) == T) {
+        axis(side = 1, at=c(0,0.5,1), labels = FALSE)
+        axis(side = 2, at=c(0,0.5,1), labels = FALSE)
+      }
+      
+      ### Guide line
+      abline(h=0.5, lty=1, col="gray60", lwd=1)
+      
     }else{
       par(new=T)
-      plot(x=curves.r$prcs[[1]]$x, y=curves.r$prcs[[1]]$y, cex.lab=1.4, cex.axis=1.4, lwd=Lwd, col=AUCs_PR_cols[i][[1]], lty=LineTypes[i][[1]], type="l", xlim=c(0,1), ylim=c(0,1), axes=FALSE,bty="n",xlab="",ylab="",main="")
+      plot(x=curves.r$prcs[[1]]$x, y=curves.r$prcs[[1]]$y, lwd=Lwd, col=AUCs_PR_cols[i][[1]], lty=LineTypes[i][[1]], type="l", xlim=c(0,1), ylim=c(0,1), axes=FALSE,bty="n",xlab="",ylab="",main="")
     }
     
     ## Plot PR 'interpolated' curves
     dev.set(4)
     if (i == 2) {
-      plot(x=x.values[2:length(x.values)],y=cm[length(cm):1],cex.lab=1.4,cex.axis=1.4,lwd=Lwd, col=AUCs_PR_cols[i][[1]], lty=LineTypes[i][[1]], type="l", xlim=c(0,1), ylim=c(0,1), xlab = "Recall", ylab = "Precision")
-      abline(h=0.5, lty=2, col="gray60", lwd=1)
+      plot(x=x.values[2:length(x.values)],y=cm[length(cm):1],lwd=Lwd, col=AUCs_PR_cols[i][[1]], lty=LineTypes[i][[1]], type="l", xlim=c(0,1), ylim=c(0,1), xaxt='n', yaxt='n', xlab = "", ylab = "")
+      
+      if (grepl(pattern = "all|label_tick", ignore.case = T, x = PrintLabelsAndTicks) == T) {
+        mtext(text = "Recall",    side=1, line = 3.8, cex=CexLabels)
+        mtext(text = "Precision", side=2, line = 2.2, cex=CexLabels)
+        axis(side = 1, at=c(0,0.5,1), labels = c(0,"",1), par(cex=CexLabels), mgp=c(3,2,0))
+        axis(side = 2, at=c(0,0.5,1), labels = c(0,"",1), par(cex=CexLabels))
+        par(cex=1)
+      }else if (grepl(pattern = "ticks", ignore.case = T, x = PrintLabelsAndTicks) == T) {
+        axis(side = 1, at=c(0,0.5,1), labels = FALSE)
+        axis(side = 2, at=c(0,0.5,1), labels = FALSE)
+      }
+
+      ### Guide line
+      abline(h=0.5, lty=1, col="gray60", lwd=1)
+      
     }else{
       par(new=T)
-      plot(x=x.values[2:length(x.values)],y=cm[length(cm):1], cex.lab=1.4, cex.axis=1.4, lwd=Lwd, col=AUCs_PR_cols[i][[1]], lty=LineTypes[i][[1]], type="l", xlim=c(0,1), ylim=c(0,1), axes=FALSE,bty="n",xlab="",ylab="",main="")
+      plot(x=x.values[2:length(x.values)],y=cm[length(cm):1], lwd=Lwd, col=AUCs_PR_cols[i][[1]], lty=LineTypes[i][[1]], type="l", xlim=c(0,1), ylim=c(0,1), axes=FALSE,bty="n",xlab="",ylab="",main="")
     }
   }
 }
 
 if (GeneratePlots == 1) {
-  ### Add legends
-  ColorsListROC <-as.character(c(AUCs_ROC_cols[2:length(colnames(mat))]))
-  ColorsListPR  <-as.character(c(AUCs_ROC_cols[2:length(colnames(mat))]))
-  LineTypesList <-as.numeric(c(LineTypes[2:length(colnames(mat))]))
+  
+  if (grepl(pattern = "all|legend", ignore.case = T, x = PrintLabelsAndTicks) == T) {
+    ### Add legends
+    ColorsListROC <-as.character(c(AUCs_ROC_cols[2:length(colnames(mat))]))
+    ColorsListPR  <-as.character(c(AUCs_ROC_cols[2:length(colnames(mat))]))
+    LineTypesList <-as.numeric(c(LineTypes[2:length(colnames(mat))]))
 
-  dev.set(2)
-  legend("bottomright", legend=c(AUCs_ROC_text[2:length(colnames(mat))]), col=ColorsListROC, lty=LineTypesList, pch="", cex=1, ncol=1, bty="n",lwd=Lwd)
-  dev.set(3)
-  legend("bottomleft",  legend=c(AUCs_PR_text[2:length(colnames(mat))]),  col=ColorsListPR,  lty=LineTypesList, pch="", cex=1, ncol=1, bty="n",lwd=Lwd)
-  dev.set(4)
-  legend("bottomleft",  legend=c(AUCs_PR_text[2:length(colnames(mat))]),  col=ColorsListPR,  lty=LineTypesList, pch="", cex=1, ncol=1, bty="n",lwd=Lwd)
+    dev.set(2)
+    legend("bottomright", legend=c(AUCs_ROC_text[2:length(colnames(mat))]), col=ColorsListROC, lty=LineTypesList, pch="", cex=1, ncol=1, bty="n",lwd=Lwd)
+    dev.set(3)
+    legend("bottomleft",  legend=c(AUCs_PR_text[2:length(colnames(mat))]),  col=ColorsListPR,  lty=LineTypesList, pch="", cex=1, ncol=1, bty="n",lwd=Lwd)
+    dev.set(4)
+    legend("bottomleft",  legend=c(AUCs_PR_text[2:length(colnames(mat))]),  col=ColorsListPR,  lty=LineTypesList, pch="", cex=1, ncol=1, bty="n",lwd=Lwd)
+  }
   
   ### Close graphic devices
   graphics.off()
@@ -253,10 +359,10 @@ if (GeneratePlots == 1) {
 writeLines("\n*** Generate AUC's outfiles ***\n")
 
 write(x=paste("Dataset", "ROC_AUC", sep = "\t", collapse = ""), file = OutRocTsv)
-write(x=paste(colnames(mat)[2:length(colnames(mat))], AUCs_ROC_vals[2:length(colnames(mat))], "\n", sep = "\t", collapse = ""), append = T, file = OutRocTsv)
+write(x=paste(colnames(mat)[2:length(colnames(mat))], AUCs_ROC_vals[2:length(colnames(mat))], sep = "\t", collapse = "\n"), append = T, file = OutRocTsv)
 
 write(x=paste("Dataset", "PR_AUC", sep = "\t", collapse = ""), file = OutPrStTsv)
-write(x=paste(colnames(mat)[2:length(colnames(mat))], AUCs_PR_vals[2:length(colnames(mat))], "\n", sep = "\t", collapse = ""), append = T, file = OutPrStTsv)
+write(x=paste(colnames(mat)[2:length(colnames(mat))], AUCs_PR_vals[2:length(colnames(mat))], sep = "\t", collapse = "\n"), append = T, file = OutPrStTsv)
 
 ####################################
 ### Report used options
