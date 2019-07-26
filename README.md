@@ -94,8 +94,8 @@ Version 2.0 http://doi.org/10.5281/zenodo.3350461
 
 Issues and feature requests
 ================
-Please use this repository templates available at:<br />
-[.github/ISSUE_TEMPLATE](https://github.com/jdime/scRNAseq_cell_cluster_labeling/tree/master/.github/ISSUE_TEMPLATE)
+Please click here to report an 'New Issue' (i.e. report bugs or request features).
+https://github.com/jdime/scRNAseq_cell_cluster_labeling/issues
 
 
 Authors
