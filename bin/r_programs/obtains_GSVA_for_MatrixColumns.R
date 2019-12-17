@@ -42,26 +42,26 @@ option_list <- list(
                 NOC2L  0.0800  0.1532  0.0745
                 ...etc
                 Default = 'No default. It's mandatory to specify this parameter'"),
-
+  #
   make_option(c("-c", "--infile_gmt"), default="NA",
               help="A path/name to a <tab> delimited *file* of gene sets in *gmt format, like:
                 GeneSet1_ID  GeneSet1_Name  Gene1 Gene2 Gene3
                 GeneSet2_ID  GeneSet2_Name  Gene4 Gene5
                 ... etc
                 Default = 'No default. It's mandatory to specify this parameter'"),
-  
+  #
   make_option(c("-o", "--outdir"), default="NA",
               help="A path/name for the results directory
                 Default = 'No default. It's mandatory to specify this parameter'"),
-  
+  #
   make_option(c("-p", "--prefix_outfiles"), default="NA",
               help="A prefix for outfile names, e.g. your project ID
                 Default = 'No default. It's mandatory to specify this parameter'"),
-  
+  #
   make_option(c("-e", "--pvalue_cutoff"), default="0.05",
               help="This script produce a *filtered.tsv matrix with pairs passing -e and -f filters and unfiltered outfiles
                 Default = 0.05"),
-
+  #
   make_option(c("-f", "--fdr_cutoff"), default="0.1",
               help="Same as -e option, but for FDR scores
                 Default = 0.1")
@@ -132,12 +132,14 @@ writeLines("\n*** Load data ***\n")
 
 ### Creating object fullmat with the matrix of genes (rows) vs. cell clusters (columns)
 fullmat<-as.matrix(data.frame(fread(InfileMat, sep="\t", na.strings=c("NA")), row.names=1))
+rownames(fullmat) <- toupper(rownames(fullmat))
 
 ### Creates object gmt2 with the gene set memberships
 gmt1<-GSA.read.gmt(InfileGmt)
 gmt2<-list()
 for (i in 1:length(gmt1[[1]])){
   tmp<-unlist(gmt1[[1]][i])
+  tmp <- toupper(tmp)
   gmt2[[gmt1[[3]][i]]]<-tmp[which(tmp!="")]
 }
 
