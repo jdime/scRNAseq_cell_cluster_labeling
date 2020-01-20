@@ -21,6 +21,7 @@ suppressPackageStartupMessages(library(data.table))   # (CRAN) to speed up readi
 suppressPackageStartupMessages(library(GSA))          # (CRAN) to handle *gmt infile
 suppressPackageStartupMessages(library(GSVA))         # (bioconductor) to run the gsva function
 suppressPackageStartupMessages(library(qvalue))       # (bioconductor) to get FDR/q-values from GSVA's p-values
+suppressPackageStartupMessages(library(cluster))      # (CRAN) to cluster/sort the *GSVA_enrichment_scores.tsv rows and columns
 ####################################
 
 ####################################
@@ -120,6 +121,7 @@ dir.create(file.path(Outdir, "GSVA"), showWarnings = F, recursive = T)
 dir.create(file.path(Tempdir),        showWarnings = F, recursive = T)
 
 OutfileEnrichmentScores<-paste(Tempdir,"/",PrefixOutfiles,".GSVA_enrichment_scores.tsv", sep="")
+OutfileEnrichScorsClust<-paste(Tempdir,"/",PrefixOutfiles,".GSVA_enrichment_scores_sorted.tsv", sep="")
 OutfilePvalues         <-paste(Tempdir,"/",PrefixOutfiles,".GSVA_pvalues.tsv", sep="")
 OutfileFdrvalues       <-paste(Tempdir,"/",PrefixOutfiles,".GSVA_fdr_values.tsv", sep="")
 OutfileAllScores       <-paste(Tempdir,"/",PrefixOutfiles,".GSVA_all_scores_table.tsv", sep="")
@@ -211,6 +213,21 @@ FilteredESMatLogical<-(PvaluesMat<=PvalueCutoff & FdrvaluesMat<=FdrCutoff)
 FilteredESMatLogical<-FilteredESMatLogical[SortedRowNames,SortedColNames]
 FilteredESMatValues<-ifelse(FilteredESMatLogical==TRUE,EnrichmentScores,NA)
 write.table(data.frame("ENRICHMENT_FILTERED"=rownames(EnrichmentScores),FilteredESMatValues),OutfileFilteredES, row.names = F,sep="\t",quote = F)
+
+####################################
+### Sort *.GSVA_enrichment_scores.tsv by similarity of prediction profiles
+####################################
+writeLines("\n*** Sort *.GSVA_enrichment_scores.tsv by similarity of prediction profiles ***\n")
+
+predictions.mat<-as.matrix(data.frame(fread(OutfileEnrichmentScores, sep="\t", na.strings=c("NA")), row.names=1))
+predictions.clusters.clust <- agnes(x = predictions.mat, metric = "manhattan")
+predictions.clusters.order <- rownames(predictions.mat)[predictions.clusters.clust$order]
+
+predictions.mat.t<-t(predictions.mat)
+predictions.classes.clust <- agnes(x = predictions.mat.t, metric = "manhattan")
+predictions.classes.order <- rownames(predictions.mat.t)[predictions.classes.clust$order]
+
+write.table(data.frame("ENRICHMENT"=predictions.clusters.order, predictions.mat[predictions.clusters.order,predictions.classes.order]), OutfileEnrichScorsClust, row.names = F,sep="\t",quote = F)
 
 ####################################
 ### Report used options
