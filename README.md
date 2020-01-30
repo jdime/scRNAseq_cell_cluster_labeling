@@ -85,6 +85,9 @@ Input Datasets
 * Three scRNA-seq datasets that can be used as inputs for these scrips, from liver cells (MacParland et al, 2018), peripheral blood mononuclear cells (PBMCs) (Zheng et al, 2017) and retinal neurons (Shekhar et al, 2016), were processed, curated and deposited into Zendo:
 https://doi.org/10.5281/zenodo.2575050
 
+Example inputs and outfiles can be found here: <br />
+https://github.com/jdime/scRNAseq_cell_cluster_labeling/tree/master/examples
+
 
 Archived code at time of publication
 ================
