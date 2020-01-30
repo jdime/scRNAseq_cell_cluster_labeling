@@ -2,7 +2,7 @@
 
 Description
 ================
-This repository contains scripts to run and benchmark scRNA-seq cell cluster labeling methods and is a companion to our paper 'Evaluation of methods to assign cell type labels to cell clusters from single-cell RNA-sequencing data' (Diaz-Mejia JJ et al (2019) [Preprint at F1000Research https://doi.org/10.12688/f1000research.18490.1].
+This repository contains scripts to run and benchmark scRNA-seq cell cluster labeling methods and is a companion to our paper 'Evaluation of methods to assign cell type labels to cell clusters from single-cell RNA-sequencing data' (Diaz-Mejia JJ et al (2019) [https://f1000research.com/articles/8-296].
 
 
 Scripts
@@ -85,7 +85,7 @@ Input Datasets
 * Three scRNA-seq datasets that can be used as inputs for these scrips, from liver cells (MacParland et al, 2018), peripheral blood mononuclear cells (PBMCs) (Zheng et al, 2017) and retinal neurons (Shekhar et al, 2016), were processed, curated and deposited into Zendo:
 https://doi.org/10.5281/zenodo.2575050
 
-Example inputs and outfiles can be found here: <br />
+Example inputs and outputs can be found here: <br />
 https://github.com/jdime/scRNAseq_cell_cluster_labeling/tree/master/examples
 
 
