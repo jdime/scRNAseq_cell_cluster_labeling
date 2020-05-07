@@ -22,6 +22,7 @@ suppressPackageStartupMessages(library(GSA))          # (CRAN) to handle *gmt in
 suppressPackageStartupMessages(library(GSVA))         # (bioconductor) to run the gsva function
 suppressPackageStartupMessages(library(qvalue))       # (bioconductor) to get FDR/q-values from GSVA's p-values
 suppressPackageStartupMessages(library(cluster))      # (CRAN) to cluster/sort the *GSVA_enrichment_scores.tsv rows and columns
+suppressPackageStartupMessages(library(Seurat))       # (CRAN) only needed if using `-t MTX` option. Otherwise you can comment this row adding # at the beginning
 ####################################
 
 ####################################
@@ -43,6 +44,12 @@ option_list <- list(
                 NOC2L  0.0800  0.1532  0.0745
                 ...etc
                 Default = 'No default. It's mandatory to specify this parameter'"),
+  #
+  make_option(c("-t", "--infile_mat_type"), default="DGE",
+              help="Indicates either 'DGE' or 'MTX' if --infile_mat is either:
+                a) a <tab> delimited digital gene expression 'DGE' *file* with genes in rows vs. cell barcodes or cell clusters in columns, or
+                b) a MTX *directory* with barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz files
+                Default = 'DGE'"),
   #
   make_option(c("-c", "--infile_gmt"), default="NA",
               help="A path/name to a <tab> delimited *file* of gene sets in *gmt format, like:
@@ -72,6 +79,7 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list=option_list))
 
 InfileMat       <- opt$infile_mat
+InfileMatType   <- opt$infile_mat_type
 InfileGmt       <- opt$infile_gmt
 Outdir          <- opt$outdir
 PrefixOutfiles  <- opt$prefix_outfiles
@@ -81,6 +89,14 @@ FdrCutoff       <- as.numeric(opt$fdr_cutoff)
 Tempdir         <- "~/temp" ## Using this for temporary storage of outfiles because sometimes long paths of outdirectories casuse R to leave outfiles unfinished
 
 StartTimeOverall<-Sys.time()
+
+####################################
+### Define default parameters
+####################################
+
+DefaultParameters <- list(
+  DigitsForRound = 5 ### Number of digits to round up enrichment score values in outfiles
+)
 
 ####################################
 ### Check that mandatory parameters are not 'NA' (default)
@@ -132,8 +148,18 @@ OutfileFilteredES      <-paste(Tempdir,"/",PrefixOutfiles,".GSVA_filtered.tsv", 
 ####################################
 writeLines("\n*** Load data ***\n")
 
-### Creating object fullmat with the matrix of genes (rows) vs. cell clusters (columns)
-fullmat<-as.matrix(data.frame(fread(InfileMat, sep="\t", na.strings=c("NA")), row.names=1))
+
+### Load gene expression matrix
+if (regexpr("^MTX$", InfileMatType, ignore.case = T)[1] == 1) {
+  print("Loading MTX infiles")
+  fullmat <- as.matrix(Read10X(data.dir = InfileMat))
+}else if (regexpr("^DGE$", InfileMatType, ignore.case = T)[1] == 1) {
+  print("Loading Digital Gene Expression matrix")
+  ## Note `check.names = F` is needed for both `fread` and `data.frame`
+  fullmat <- as.matrix(data.frame(fread(InfileMat, check.names = F), row.names=1, check.names = F))
+}else{
+  stop(paste("Unexpected type of input: ", InfileMatType, "\n\nFor help type:\n\nRscript obtains_GSVA_for_MatrixColumns.R -h\n\n", sep=""))
+}
 rownames(fullmat) <- toupper(rownames(fullmat))
 
 ### Creates object gmt2 with the gene set memberships
@@ -152,7 +178,7 @@ SortedRowNames<-rownames(EnrichmentScores)
 SortedColNames<-colnames(EnrichmentScores)
 #
 EnrichmentScores<-EnrichmentScores[SortedRowNames,SortedColNames]
-write.table(data.frame("ENRICHMENT"=colnames(EnrichmentScores), t(EnrichmentScores)), OutfileEnrichmentScores, row.names = F,sep="\t",quote = F)
+write.table(data.frame("ENRICHMENT"=colnames(EnrichmentScores), t(round(x=EnrichmentScores, digits = DefaultParameters$DigitsForRound))), OutfileEnrichmentScores, row.names = F,sep="\t",quote = F)
 
 ### maps gene set members from gmt2
 Classes.list<-NULL
@@ -187,7 +213,7 @@ for (columnNumber in 1:ncol(EnrichmentScores)){
   pvalues<-pnorm(-abs(scale(EnrichmentScores[,columnNumber])[,1]))
   qvalues<-qvalue(pvalues,pi0=1)$lfdr
   PassCutoffs<-ifelse((pvalues<=PvalueCutoff & qvalues<=FdrCutoff)==TRUE,1,0)
-  concatenatedResults<-cbind(colnames(fullmat)[columnNumber], EnrichmentScores[,columnNumber], pvalues,qvalues,PassCutoffs)
+  concatenatedResults<-cbind(colnames(fullmat)[columnNumber], round(x=EnrichmentScores[,columnNumber], digits = DefaultParameters$DigitsForRound) , pvalues,qvalues,PassCutoffs)
   # Write out Table with CLASS ColumnHeader EnrichmentScore p.Val FDR PassCutoff
   write.table(x=data.frame("CLASS"=rownames(concatenatedResults),concatenatedResults),file=OutfileAllScores, row.names = F,sep="\t",quote = F,col.names = F,append = T)
 }
@@ -212,7 +238,7 @@ write.table(x=FdrvaluesMat, file=OutfileFdrvalues, row.names = T, sep="\t", quot
 FilteredESMatLogical<-(PvaluesMat<=PvalueCutoff & FdrvaluesMat<=FdrCutoff)
 FilteredESMatLogical<-FilteredESMatLogical[SortedRowNames,SortedColNames]
 FilteredESMatValues<-ifelse(FilteredESMatLogical==TRUE,EnrichmentScores,NA)
-write.table(data.frame("ENRICHMENT_FILTERED"=rownames(EnrichmentScores),FilteredESMatValues),OutfileFilteredES, row.names = F,sep="\t",quote = F)
+write.table(data.frame("ENRICHMENT_FILTERED"=rownames(EnrichmentScores), round(x=FilteredESMatValues, digits = DefaultParameters$DigitsForRound)),OutfileFilteredES, row.names = F,sep="\t",quote = F)
 
 ####################################
 ### Sort *.GSVA_enrichment_scores.tsv by similarity of prediction profiles
