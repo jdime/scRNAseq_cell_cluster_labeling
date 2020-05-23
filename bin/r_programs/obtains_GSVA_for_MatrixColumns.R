@@ -142,6 +142,7 @@ OutfilePvalues         <-paste(Tempdir,"/",PrefixOutfiles,".GSVA_pvalues.tsv", s
 OutfileFdrvalues       <-paste(Tempdir,"/",PrefixOutfiles,".GSVA_fdr_values.tsv", sep="")
 OutfileAllScores       <-paste(Tempdir,"/",PrefixOutfiles,".GSVA_all_scores_table.tsv", sep="")
 OutfileFilteredES      <-paste(Tempdir,"/",PrefixOutfiles,".GSVA_filtered.tsv", sep="")
+OutfileFinalLabel      <-paste(Tempdir,"/",PrefixOutfiles,".GSVA_final_label.tsv", sep="")
 
 ####################################
 ### Load data
@@ -252,8 +253,15 @@ predictions.clusters.order <- rownames(predictions.mat)[predictions.clusters.clu
 predictions.mat.t<-t(predictions.mat)
 predictions.classes.clust <- agnes(x = predictions.mat.t, metric = "manhattan")
 predictions.classes.order <- rownames(predictions.mat.t)[predictions.classes.clust$order]
+predictions.mat.ordered   <- predictions.mat[predictions.clusters.order,predictions.classes.order]
 
-write.table(data.frame("ENRICHMENT"=predictions.clusters.order, predictions.mat[predictions.clusters.order,predictions.classes.order]), OutfileEnrichScorsClust, row.names = F,sep="\t",quote = F)
+write.table(data.frame("ENRICHMENT"=predictions.clusters.order, predictions.mat.ordered), OutfileEnrichScorsClust, row.names = F,sep="\t",quote = F)
+
+####################################
+### Outfile *.GSVA_final_label.tsv - currently simply taking the maximum GSVA enrichment score for each array (column of --infile_mat)
+####################################
+write(paste(row.names(predictions.mat.ordered), colnames(predictions.mat.ordered)[max.col(predictions.mat.ordered, ties.method="first")], sep = "\t", collapse = "\n"),
+      OutfileFinalLabel)
 
 ####################################
 ### Report used options
